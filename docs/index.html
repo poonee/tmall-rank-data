@@ -3,240 +3,437 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>商用咖啡机排行榜 — 数据看板</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
-<script src="ranking_data.js"></script>
+<title>天猫商用咖啡机热销榜 - 15天动态追踪</title>
+<script src="ranking_15day_data.js"></script>
 <style>
-* { margin:0; padding:0; box-sizing:border-box; }
-body { font-family: -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
-       background: #f5f6fa; color: #2c3e50; padding: 20px; }
-.header { background: linear-gradient(135deg, #667eea, #764ba2);
-          color: #fff; padding: 30px; border-radius: 16px; margin-bottom: 24px; }
-.header h1 { font-size: 24px; margin-bottom: 8px; }
-.header .meta { font-size: 14px; opacity: 0.9; }
-.header .meta span { margin-right: 20px; }
-.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr));
-         gap: 16px; margin-bottom: 24px; }
-.card { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
-.card .value { font-size: 28px; font-weight: 700; color: #667eea; }
-.card .label { font-size: 13px; color: #999; margin-top: 4px; }
-.section { background: #fff; border-radius: 12px; padding: 24px;
-           margin-bottom: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
-.section h2 { font-size: 18px; margin-bottom: 16px; color: #333; }
-table { width: 100%; border-collapse: collapse; font-size: 14px; }
-th { background: #f8f9fa; padding: 10px 12px; text-align: left;
-     font-weight: 600; color: #666; border-bottom: 2px solid #eee; }
-td { padding: 10px 12px; border-bottom: 1px solid #f0f0f0; }
-tr:hover td { background: #f8f9ff; }
-.rank-badge { display: inline-block; width: 28px; height: 28px; line-height: 28px;
-              text-align: center; border-radius: 50%; font-weight: 700; font-size: 13px; }
-.rank-1 { background: #ffd700; color: #333; }
-.rank-2 { background: #e8e8e8; color: #333; }
-.rank-3 { background: #ffc0b0; color: #333; }
-.rank-other { background: #f0f0f0; color: #999; }
-.trend-up { color: #e74c3c; }
-.trend-down { color: #27ae60; }
-.trend-flat { color: #999; }
-.price { font-weight: 600; color: #e74c3c; }
-.chart-container { position: relative; height: 400px; }
-.tabs { display: flex; gap: 8px; margin-bottom: 16px; }
-.tab { padding: 8px 20px; border-radius: 20px; cursor: pointer;
-       font-size: 14px; border: 1px solid #ddd; background: #fff; }
-.tab.active { background: #667eea; color: #fff; border-color: #667eea; }
-.footer { text-align: center; padding: 20px; font-size: 12px; color: #999; }
-@media (max-width: 768px) {
-  .header { padding: 20px; }
-  .cards { grid-template-columns: repeat(2, 1fr); }
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f5f5f5;color:#333}
+.header{background:linear-gradient(135deg,#1a1a2e,#16213e);color:#fff;padding:20px;text-align:center;position:relative}
+.header .back-link{position:absolute;left:20px;top:20px;color:#90caf9;text-decoration:none;font-size:.85em}
+.header .back-link:hover{text-decoration:underline}
+.header h1{font-size:1.3em;margin-bottom:4px}
+.header .sub{font-size:.82em;opacity:.7}
+.container{max-width:1400px;margin:0 auto;padding:12px}
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:15px 0}
+.stat-card{background:#fff;border-radius:10px;padding:14px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.stat-card .stat-value{font-size:1.5em;font-weight:700;color:#1a1a2e}
+.stat-card .stat-label{font-size:.75em;color:#888;margin-top:2px}
+.stat-card.wigomat{border:2px solid #4caf50}
+.stat-card.wigomat .stat-value{color:#2e7d32}
+
+/* 顶部前三名展示区 */
+.top3-showcase{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:20px 0}
+.top3-card{background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.08);text-align:center;padding-bottom:18px;position:relative;transition:transform .2s,box-shadow .2s}
+.top3-card:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,.12)}
+.top3-card .rank-num{position:absolute;top:12px;left:12px;width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:1em;z-index:2;box-shadow:0 2px 6px rgba(0,0,0,.2)}
+.top3-card.rank1 .rank-num{background:linear-gradient(135deg,#e65100,#ff8f00)}
+.top3-card.rank2 .rank-num{background:linear-gradient(135deg,#bf360c,#e65100)}
+.top3-card.rank3 .rank-num{background:linear-gradient(135deg,#4e342e,#8d6e63)}
+.top3-card .top3-img-wrap{padding:28px 16px;background:#fafafa;min-height:230px;display:flex;align-items:center;justify-content:center}
+.top3-card .top3-img{width:100%;max-width:200px;height:200px;object-fit:contain;display:block}
+.top3-card .top3-brand{font-size:.82em;color:#888;margin-top:14px}
+.top3-card .top3-brand strong{color:#555}
+.top3-card .top3-model{font-weight:600;color:#1a1a2e;margin-top:4px;font-size:.92em}
+.top3-card.wigomat-card .top3-brand strong,.top3-card.wigomat-card .top3-model{color:#2e7d32}
+.top3-card .top3-price{color:#c62828;font-weight:600;margin-top:6px;font-size:1em}
+.top3-card .top3-sales{font-size:.78em;color:#e65100;margin-top:5px;display:inline-block;background:#fff3e0;padding:2px 10px;border-radius:10px;font-weight:600}
+
+.data-section{background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.08);margin-bottom:20px}
+.data-section .section-title{background:linear-gradient(135deg,#1a1a2e,#16213e);color:#fff;padding:14px 16px;font-size:1em;font-weight:600}
+.table-wrap{overflow-x:auto}
+.data-table{width:100%;border-collapse:collapse;font-size:.94em}
+.data-table th{background:#f0f2f5;padding:10px 8px;text-align:left;font-weight:600;color:#555;border-bottom:2px solid #ddd;white-space:nowrap;font-size:1.02em;position:relative}
+.data-table td{padding:8px;border-bottom:1px solid #eee;vertical-align:middle}
+.data-table tr:nth-child(even){background:#fafafa}
+.data-table tr:hover{background:#f0f7ff}
+.data-table .wigomat-row{background:#e8f5e9!important}
+.data-table .wigomat-row:hover{background:#c8e6c9!important}
+.rank-badge{display:inline-block;width:28px;height:28px;line-height:28px;border-radius:50%;text-align:center;font-size:.78em;font-weight:700;color:#fff}
+.rank-badge.top3{width:36px;height:36px;line-height:36px;font-size:.9em}
+.rank-badge.r1{background:linear-gradient(135deg,#e65100,#ff8f00)}
+.rank-badge.r2{background:linear-gradient(135deg,#bf360c,#e65100)}
+.rank-badge.r3{background:linear-gradient(135deg,#4e342e,#8d6e63)}
+.rank-badge.rn{background:#9e9e9e}
+
+/* 图片：1-3名用大图120x120，4-30用中图104x104 */
+.img-top3{width:120px;height:120px;object-fit:contain;border-radius:8px;background:#f5f5f5;border:2px solid #e65100;vertical-align:middle;margin-right:6px}
+.img-medium{width:104px;height:104px;object-fit:contain;border-radius:8px;background:#f5f5f5;border:1px solid #eee;vertical-align:middle;margin-right:6px}
+
+.up{color:#2e7d32;font-weight:700}
+.down{color:#c62828;font-weight:700}
+.same{color:#888}
+.price-cell{color:#c62828;font-weight:600;white-space:nowrap}
+.best-cell{font-weight:600;color:#1a1a2e}
+.avg-cell{font-weight:500;color:#555}
+
+/* 初始列宽 */
+.data-table th:nth-child(1),.data-table td:nth-child(1){text-align:center}
+.data-table th:nth-child(2),.data-table td:nth-child(2){text-align:center}
+.data-table th:nth-child(6),.data-table td:nth-child(6){text-align:center}
+.data-table th:nth-child(7),.data-table td:nth-child(7){text-align:center}
+.data-table th:nth-child(8),.data-table td:nth-child(8){text-align:center}
+.data-table th:nth-child(9),.data-table td:nth-child(9){text-align:center}
+.data-table th:nth-child(5){text-align:center}
+.data-table th:nth-child(4){white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.data-table td:nth-child(4){white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+.sparkline-cell svg{display:inline-block}
+.tooltip{position:relative;cursor:pointer;display:inline-block}
+.tooltip .tip-text{visibility:hidden;position:absolute;background:#333;color:#fff;padding:4px 8px;border-radius:4px;font-size:.75em;white-space:nowrap;z-index:10;bottom:100%;left:50%;transform:translateX(-50%);opacity:0;transition:opacity .2s}
+.tooltip:hover .tip-text{visibility:visible;opacity:1}
+
+/* 拖拽手柄 */
+.resize-handle{position:absolute;top:0;right:-3px;width:8px;height:100%;cursor:col-resize;z-index:10}
+.resize-handle:after{content:'';position:absolute;top:25%;left:3px;width:2px;height:50%;background:transparent;border-radius:1px;transition:background .15s}
+.resize-handle:hover:after,.resizing .resize-handle:after{background:#999}
+.resizing{user-select:none!important}
+
+.footer{background:#1a1a2e;color:#aaa;text-align:center;padding:20px;margin-top:20px;font-size:.8em}
+.footer a{color:#90caf9;text-decoration:none;margin:0 6px}
+.footer a:hover{text-decoration:underline}
+.footer .footer-title{color:#ccc;font-weight:600;margin-bottom:8px}
+.footer .footer-note{font-size:.75em;color:#666;margin-top:6px}
+.filter-bar{display:flex;flex-wrap:wrap;gap:8px;padding:12px 16px;background:#fff;border-bottom:1px solid #eee;align-items:center}
+.filter-bar label{font-size:.82em;color:#555;margin-right:4px}
+.filter-bar select,.filter-bar input{padding:4px 10px;border:1px solid #ddd;border-radius:6px;font-size:.82em;background:#fff;cursor:pointer}
+.filter-bar select{min-width:120px}
+.filter-bar input{cursor:text}
+.filter-bar .refresh-btn{padding:4px 14px;background:#1a1a2e;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:.8em}
+.filter-bar .refresh-btn:hover{background:#2a2a4e}
+.empty-cell{color:#ccc;font-size:.75em}
+.wigomat-badge{display:inline-block;background:#4caf50;color:#fff;font-size:.68em;padding:1px 6px;border-radius:8px;margin-left:4px}
+
+/* 推测日销列 */
+.est-daily{text-align:center;white-space:nowrap;font-weight:600}
+.est-daily .est-value{font-size:.92em}
+.est-daily .est-range{display:block;font-size:.65em;font-weight:400;color:#888;margin-top:1px}
+.est-badge{display:inline-block;padding:1px 5px;border-radius:4px;font-size:.65em;font-weight:400;color:#fff;margin-left:2px;vertical-align:middle}
+.est-badge.ch{background:#2e7d32}
+.est-badge.cm{background:#e65100}
+.est-badge.cl{background:#c62828}
+.est-badge.s7{background:#e65100}
+.est-badge.s30{background:#1565c0}
+.est-badge.sy{background:#7b1fa2}
+.est-tip{position:relative;cursor:help}
+.est-tip .tip-text{visibility:hidden;position:absolute;background:#333;color:#fff;padding:6px 10px;border-radius:6px;font-size:.72em;white-space:normal;z-index:20;bottom:110%;left:50%;transform:translateX(-50%);opacity:0;transition:opacity .2s;width:220px;text-align:left;line-height:1.5}
+.est-tip:hover .tip-text{visibility:visible;opacity:1}
+
+.list-subtitle{display:flex;align-items:center;gap:8px;padding:10px 16px;background:#fff;border-bottom:1px solid #f0f0f0;font-size:.88em;color:#555;font-weight:600}
+.list-subtitle .trophy{color:#e65100;font-size:1.1em}
+.list-subtitle .top-label{color:#888;font-weight:400;font-size:.85em}
+
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.top3-card{animation:fadeIn .4s ease-out}
+.top3-card:nth-child(2){animation-delay:.1s}
+.top3-card:nth-child(3){animation-delay:.2s}
+
+@media(max-width:768px){
+ .top3-showcase{grid-template-columns:1fr}
+ .top3-card .top3-img{max-width:160px;height:160px}
+ .img-top3{width:80px;height:80px}
+ .img-medium{width:64px;height:64px}
+ .data-table{font-size:.87em}
+ .data-table td,.data-table th{padding:4px 2px}
 }
 </style>
 </head>
 <body>
-
 <div class="header">
-  <h1>☕ 商用咖啡机排行榜 · 数据看板</h1>
-  <div class="meta">
-    <span id="meta-date">📅 加载中...</span>
-    <span id="meta-records">📊 加载中...</span>
-    <span id="meta-brands">🏷️ 加载中...</span>
-  </div>
+<a href="index.html" class="back-link">← 返回主页</a>
+<h1>☕ 天猫商用咖啡机热销榜 - 15天动态追踪</h1>
+<div class="sub">数据来源：天猫热销榜TOP30 | 每日自动采集 | PC+手机双端数据整合 | 品牌维度型号标准化 | 仅更新数据文件不变页面</div>
 </div>
-
-<!-- 汇总卡片 -->
-<div class="cards" id="cards">
-  <div class="card"><div class="value" id="card-total">-</div><div class="label">累计记录数</div></div>
-  <div class="card"><div class="value" id="card-days">-</div><div class="label">采集天数</div></div>
-  <div class="card"><div class="value" id="card-brands">-</div><div class="label">监控品牌</div></div>
-  <div class="card"><div class="value" id="card-latest">-</div><div class="label">最新数据</div></div>
+<div class="container">
+<div id="statsRow" class="stats-row"></div>
+<div id="top3Showcase" class="top3-showcase"></div>
+<div class="data-section">
+<div class="section-title">📊 品牌排名动态表（TOP30 · <span id="dayCount">15</span>天趋势）</div>
+<div class="filter-bar">
+<label for="dateFilter">显示日期:</label>
+<select id="dateFilter"></select>
+<span style="margin:0 8px;color:#ddd">|</span>
+<label for="brandFilter">品牌筛选:</label>
+<input type="text" id="brandFilter" placeholder="输入品牌名..." style="width:130px">
+<button class="refresh-btn" id="refreshBtn">🔍 刷新</button>
 </div>
-
-<!-- 排名趋势图 -->
-<div class="section">
-  <h2>📈 品牌排名趋势（15天）</h2>
-  <div class="tabs">
-    <span class="tab active" onclick="switchChart('pc')">PC端</span>
-    <span class="tab" onclick="switchChart('mobile')">手机端</span>
-  </div>
-  <div class="chart-container">
-    <canvas id="trendChart"></canvas>
-  </div>
+<div class="list-subtitle"><span class="trophy">🏆</span> 全部榜单 <span class="top-label">TOP 30</span></div>
+<div class="table-wrap">
+<table class="data-table" id="mainTable">
+<thead>
+<tr>
+<th>排名</th>
+<th>商品图</th>
+<th>品牌</th>
+<th>型号</th>
+<th>价格</th>
+<th class="est-daily"><span class="tooltip">推测日销<span class="tip-text">基于7天/30天销量数据推算，数据越多越准确</span></span></th>
+<th>较昨日</th>
+<th>最佳排名</th>
+<th><span class="tooltip">平均排名<span class="tip-text">有数据的取实际排名，无数据的按35计算</span></span></th>
+<th class="sparkline-cell">15天日变动曲线</th>
+</tr>
+</thead>
+<tbody id="tableBody"></tbody>
+</table>
 </div>
-
-<!-- 最新排行 -->
-<div class="section">
-  <h2>🏆 最新排名 TOP10</h2>
-  <table>
-    <thead><tr><th>#</th><th>品牌</th><th>型号</th><th>价格</th><th>排名趋势</th><th>近7天销量</th></tr></thead>
-    <tbody id="latest-table"></tbody>
-  </table>
 </div>
-
-<!-- 品牌榜 -->
-<div class="section">
-  <h2>🏅 品牌榜 TOP10</h2>
-  <table>
-    <thead><tr><th>#</th><th>品牌</th><th>描述</th><th>价格(¥)</th></tr></thead>
-    <tbody id="brand-table"></tbody>
-  </table>
 </div>
-
 <div class="footer">
-  数据每日更新 · 自动采集于天猫排行榜 · Powered by Rank Data System
+<div class="footer-title">🔗 关联文档</div>
+<a href="index.html">首页</a> |
+<a href="https://github.com/poonee/tmall-rank-data">GitHub 数据仓库</a>
+<br><br>
+数据文件：<code style="color:#aaa;font-size:.85em">ranking_15day_data.js</code> |
+抓取新数据后更新此文件即可，页面结构不变
+<br>
+<span id="footerInfo" style="font-size:.85em"></span>
 </div>
 
 <script>
-// ── 初始化数据 ──
-const data = RANK_DATA;
+(function() {
+    'use strict';
 
-// ── 更新头部 ──
-document.getElementById('meta-date').textContent = '📅 数据至: ' + (data.summary.latest_date || '暂无');
-document.getElementById('meta-records').textContent = '📊 总记录: ' + data.summary.total_records;
-document.getElementById('meta-brands').textContent = '🏷️ 品牌: ' + data.summary.brand_count;
-
-document.getElementById('card-total').textContent = data.summary.total_records;
-document.getElementById('card-days').textContent = data.dates.length + '天';
-document.getElementById('card-brands').textContent = data.summary.brand_count;
-document.getElementById('card-latest').textContent = data.summary.latest_date || '-';
-
-// ── 排名趋势图 ──
-let trendChart = null;
-const COLORS = ['#667eea','#e74c3c','#27ae60','#f39c12','#9b59b6',
-                '#1abc9c','#e67e22','#3498db','#2ecc71','#e91e63'];
-
-function renderTrendChart(source) {
-  const ctx = document.getElementById('trendChart').getContext('2d');
-  if (trendChart) trendChart.destroy();
-
-  const labels = data.dates;
-  const datasets = [];
-
-  data.rankingTrend.forEach((item, i) => {
-    const color = COLORS[i % COLORS.length];
-    const label = item.brand + ' ' + item.model;
-    // 从 rawData 中取每天的排名
-    const ranks = labels.map(d => {
-      const dayData = data.rawData[source] && data.rawData[source][d];
-      if (!dayData) return null;
-      const found = dayData.find(r => r.brand === item.brand);
-      return found ? found.rank : null;
-    });
-    // 检查是否有有效数据
-    if (ranks.some(r => r !== null)) {
-      datasets.push({
-        label: label,
-        data: ranks,
-        borderColor: color,
-        backgroundColor: color + '20',
-        tension: 0.3,
-        pointRadius: 4,
-        spanGaps: true,
-      });
+    const D = RANKING_15DAY;
+    if (!D || !D.products) {
+        document.getElementById('tableBody').innerHTML =
+            '<tr><td colspan="10" style="text-align:center;padding:40px;color:#999">暂无数据</td></tr>';
+        return;
     }
-  });
 
-  trendChart = new Chart(ctx, {
-    type: 'line',
-    data: { labels, datasets },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      scales: {
-        y: { reverse: true, min: 0.5, max: 10.5,
-             ticks: { stepSize: 1 },
-             title: { display: true, text: '排名' } },
-        x: { title: { display: true, text: '日期' } }
-      },
-      plugins: {
-        legend: { position: 'bottom', labels: { padding: 20, usePointStyle: true } },
-        tooltip: {
-          callbacks: {
-            label: ctx => ctx.raw ? `${ctx.dataset.label}: 第${ctx.raw}名` : '暂无数据'
-          }
+    // ── 统计卡片 ──
+    function renderStats() {
+        const stats = D.stats;
+        const top1 = D.products.find(p => p.rank_today === 1);
+        const html = `
+            <div class="stat-card${top1 && top1.brand === 'wigomat' ? ' wigomat' : ''}">
+                <div class="stat-value">${stats.total_products}</div><div class="stat-label">在榜产品</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">${stats.brand_count}</div><div class="stat-label">品牌数</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">${stats.latest_date || '-'}</div><div class="stat-label">最新日期</div>
+            </div>
+            <div class="stat-card${top1 && top1.brand === 'wigomat' ? ' wigomat' : ''}">
+                <div class="stat-value">${top1 ? top1.brand : '-'}</div><div class="stat-label">当前榜首</div>
+            </div>
+        `;
+        document.getElementById('statsRow').innerHTML = html;
+    }
+
+    // ── Top3 展示区 ──
+    function renderTop3() {
+        const top3 = D.products.slice(0, 3);
+        if (!top3.length) return;
+        let html = '';
+        top3.forEach((p, i) => {
+            const rankClass = 'rank' + (i + 1);
+            const isWigomat = p.brand === 'wigomat';
+            const imgHtml = p.image_url
+                ? '<img class="top3-img" src="' + p.image_url + '" alt="' + p.brand + '">'
+                : '<div style="width:200px;height:200px;display:flex;align-items:center;justify-content:center;color:#ccc;font-size:3em">☕</div>';
+            html += '<div class="top3-card ' + rankClass + (isWigomat ? ' wigomat-card' : '') + '">' +
+                '<div class="rank-num">' + p.rank_today + '</div>' +
+                '<div class="top3-img-wrap">' + imgHtml + '</div>' +
+                '<div class="top3-brand"><strong>' + p.brand + '</strong>' + (isWigomat ? '<span class="wigomat-badge">⭐</span>' : '') + '</div>' +
+                '<div class="top3-model">' + p.model + '</div>' +
+                '<div class="top3-price">¥' + p.price.toLocaleString() + '</div>' +
+                (p.sales_7d ? '<div class="top3-sales">7天 ' + p.sales_7d + '</div>' : '') +
+                '</div>';
+        });
+        document.getElementById('top3Showcase').innerHTML = html;
+    }
+
+    // ── 日期筛选器 ──
+    function renderDateFilter() {
+        const sel = document.getElementById('dateFilter');
+        const dates = D.dates || [];
+        // 从最新到最旧
+        for (let i = dates.length - 1; i >= 0; i--) {
+            const opt = document.createElement('option');
+            opt.value = dates[i];
+            opt.textContent = dates[i];
+            if (dates[i] === D.latestDate) opt.selected = true;
+            sel.appendChild(opt);
         }
-      }
     }
-  });
-}
 
-function switchChart(source) {
-  document.querySelectorAll('.tabs .tab').forEach(t => t.classList.remove('active'));
-  event.target.classList.add('active');
-  renderTrendChart(source);
-}
+    // ── Sparkline SVG 生成 ──
+    function makeSparkline(trend, w, h) {
+        w = w || 120; h = h || 32;
+        const valid = trend.filter(v => v !== null && v !== undefined);
+        if (valid.length < 2) return '<span class="empty-cell">数据不足</span>';
 
-// ── 最新排名表 ──
-function renderLatestTable() {
-  const latest = data.summary.latest_date;
-  if (!latest || !data.rawData.pc[latest]) {
-    document.getElementById('latest-table').innerHTML =
-      '<tr><td colspan="6" style="text-align:center;color:#999;">暂无数据</td></tr>';
-    return;
-  }
+        const maxR = Math.max(...valid);
+        const minR = Math.min(...valid);
+        const range = maxR - minR || 1;
+        const pad = 3;
 
-  const rows = data.rawData.pc[latest]
-    .sort((a,b) => a.rank - b.rank)
-    .slice(0, 10);
+        const points = [];
+        const step = (w - 2 * pad) / Math.max(trend.length - 1, 1);
+        trend.forEach((v, i) => {
+            if (v === null || v === undefined) {
+                points.push(null);
+            } else {
+                const x = pad + i * step;
+                const y = pad + ((v - minR) / range) * (h - 2 * pad);
+                points.push(x + ',' + y.toFixed(1));
+            }
+        });
 
-  let html = '';
-  rows.forEach(r => {
-    const rankClass = r.rank <= 3 ? `rank-${r.rank}` : 'rank-other';
-    const trendIcon = r.trend ? (r.trend.includes('上升') ? '📈' : r.trend.includes('降') ? '📉' : '🏆') : '➖';
-    html += `<tr>
-      <td><span class="rank-badge ${rankClass}">${r.rank}</span></td>
-      <td><strong>${r.brand}</strong></td>
-      <td>${r.model}</td>
-      <td class="price">¥${r.price.toLocaleString()}</td>
-      <td>${trendIcon} ${r.trend || ''}</td>
-      <td>${r.sales_7d || '-'}</td>
-    </tr>`;
-  });
-  document.getElementById('latest-table').innerHTML = html;
-}
+        // 连线（跳过 null）
+        let pathD = '';
+        let lastValid = null;
+        points.forEach((p, i) => {
+            if (p === null) return;
+            if (lastValid === null) {
+                pathD += 'M' + p;
+            } else {
+                pathD += 'L' + p;
+            }
+            lastValid = i;
+        });
 
-// ── 品牌榜 ──
-function renderBrandTable() {
-  const brands = data.brandRankings.slice(-10).reverse();
-  if (brands.length === 0) {
-    document.getElementById('brand-table').innerHTML =
-      '<tr><td colspan="4" style="text-align:center;color:#999;">暂无数据</td></tr>';
-    return;
-  }
-  let html = '';
-  brands.forEach(r => {
-    const rankClass = r.rank <= 3 ? `rank-${r.rank}` : 'rank-other';
-    html += `<tr>
-      <td><span class="rank-badge ${rankClass}">${r.rank}</span></td>
-      <td><strong>${r.brand_cn}</strong> <small style="color:#999">${r.brand_en}</small></td>
-      <td>${r.description || '-'}</td>
-      <td class="price">${r.prices || '-'}</td>
-    </tr>`;
-  });
-  document.getElementById('brand-table').innerHTML = html;
-}
+        // 最后一个有效点加圆点
+        let dot = '';
+        for (let i = points.length - 1; i >= 0; i--) {
+            if (points[i] !== null) {
+                dot = '<circle cx="' + points[i].split(',')[0] + '" cy="' + points[i].split(',')[1] + '" r="2.5" fill="#e65100"/>';
+                break;
+            }
+        }
 
-// ── 初始化 ──
-renderTrendChart('pc');
-renderLatestTable();
-renderBrandTable();
+        return '<svg width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '">' +
+            '<path d="' + pathD + '" fill="none" stroke="#e65100" stroke-width="1.5"/>' +
+            dot + '</svg>';
+    }
+
+    // ── 排名变化显示 ──
+    function renderRankChange(change) {
+        if (change === 0 || change === null || change === undefined) return '<span class="same">-</span>';
+        if (change < 0) return '<span class="up">↑' + Math.abs(change) + '</span>';
+        return '<span class="down">↓' + change + '</span>';
+    }
+
+    // ── 推测日销显示 ──
+    function renderEstDaily(est) {
+        if (!est || est.value === 0) return '<span class="empty-cell">-</span>';
+        const srcBadge = est.source ? '<span class="est-badge ' + est.source + '">' +
+            ({s7:'7天',s30:'30天',sy:'年'}[est.source] || est.source) + '</span>' : '';
+        const confBadge = est.confidence ? '<span class="est-badge ' + est.confidence + '">' +
+            ({ch:'高',cm:'中',cl:'低'}[est.confidence] || est.confidence) + '</span>' : '';
+        return '<span class="est-value">' + est.value + '</span>' +
+               '<span class="est-range">' + est.range + '/日</span>' +
+               srcBadge + confBadge;
+    }
+
+    // ── 主表格 ──
+    function renderTable() {
+        const selectedDate = document.getElementById('dateFilter').value || D.latestDate;
+        const brandFilter = (document.getElementById('brandFilter').value || '').toLowerCase();
+
+        let products = D.products;
+        if (brandFilter) {
+            products = products.filter(p =>
+                p.brand.toLowerCase().includes(brandFilter) ||
+                p.model.toLowerCase().includes(brandFilter)
+            );
+        }
+
+        let html = '';
+        products.forEach((p, idx) => {
+            const isWigomat = p.brand === 'wigomat';
+            const rowClass = isWigomat ? 'wigomat-row' : '';
+            const rankClass = p.rank_today <= 3 ? 'r' + p.rank_today : 'rn';
+            const badgeExtra = p.rank_today <= 3 ? ' top3' : '';
+
+            // 商品图
+            const imgClass = p.rank_today <= 3 ? 'img-top3' : 'img-medium';
+            const imgHtml = p.image_url
+                ? '<img class="' + imgClass + '" src="' + p.image_url + '" alt="' + p.brand + '">'
+                : '<span style="color:#ccc;font-size:1.5em">☕</span>';
+
+            html += '<tr class="' + rowClass + '">' +
+                '<td><span class="rank-badge' + badgeExtra + ' ' + rankClass + '">' + p.rank_today + '</span></td>' +
+                '<td>' + imgHtml + '</td>' +
+                '<td><strong>' + p.brand + '</strong>' + (isWigomat ? '<span class="wigomat-badge">⭐</span>' : '') + '</td>' +
+                '<td title="' + p.model + '">' + p.model + '</td>' +
+                '<td class="price-cell">¥' + p.price.toLocaleString() + '</td>' +
+                '<td class="est-daily">' + renderEstDaily(p.est_daily) + '</td>' +
+                '<td>' + renderRankChange(p.rank_change) + '</td>' +
+                '<td class="best-cell">' + p.best_rank + '</td>' +
+                '<td class="avg-cell">' + p.avg_rank + '</td>' +
+                '<td class="sparkline-cell">' + makeSparkline(p.trend) + '</td>' +
+                '</tr>';
+        });
+
+        if (!html) {
+            html = '<tr><td colspan="10" style="text-align:center;padding:30px;color:#999">无匹配数据</td></tr>';
+        }
+
+        document.getElementById('tableBody').innerHTML = html;
+        document.getElementById('dayCount').textContent = D.dates.length;
+    }
+
+    // ── 列宽拖拽 ──
+    function initColumnResize() {
+        const table = document.getElementById('mainTable');
+        const ths = table.querySelectorAll('thead th');
+        ths.forEach((th, colIdx) => {
+            const handle = document.createElement('div');
+            handle.className = 'resize-handle';
+            th.appendChild(handle);
+
+            let startX, startW;
+            handle.addEventListener('mousedown', e => {
+                startX = e.pageX;
+                startW = th.offsetWidth;
+                document.body.classList.add('resizing');
+
+                const onMove = ev => {
+                    const diff = ev.pageX - startX;
+                    th.style.width = Math.max(40, startW + diff) + 'px';
+                    th.style.minWidth = th.style.width;
+                };
+                const onUp = () => {
+                    document.body.classList.remove('resizing');
+                    document.removeEventListener('mousemove', onMove);
+                    document.removeEventListener('mouseup', onUp);
+                };
+                document.addEventListener('mousemove', onMove);
+                document.addEventListener('mouseup', onUp);
+                e.preventDefault();
+            });
+        });
+    }
+
+    // ── 页脚信息 ──
+    function renderFooter() {
+        const el = document.getElementById('footerInfo');
+        if (el && D.stats) {
+            el.textContent = '数据更新至 ' + (D.stats.latest_date || '-') +
+                ' | 共 ' + D.stats.total_products + ' 个产品在榜' +
+                ' | 累计采集 ' + D.totalDays + ' 天';
+        }
+    }
+
+    // ── 初始化 ──
+    renderStats();
+    renderTop3();
+    renderDateFilter();
+    renderTable();
+    initColumnResize();
+    renderFooter();
+
+    // 事件绑定
+    document.getElementById('refreshBtn').addEventListener('click', renderTable);
+    document.getElementById('brandFilter').addEventListener('input', renderTable);
+    document.getElementById('dateFilter').addEventListener('change', function() {
+        // 切换日期时可以重新排序（暂只筛选品牌）
+        renderTable();
+    });
+
+})();
 </script>
 </body>
 </html>
