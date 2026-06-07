@@ -1,3 +1,6 @@
+// 品牌榜数据 — 自动生成于 2026-06-07 20:30
+// 请勿手动修改，运行 python3 scripts/data_to_html.py 更新
+
 const BRAND_RANKING_15DAY = {
   "dates": [
     "2026-05-28",
@@ -14,19 +17,15 @@ const BRAND_RANKING_15DAY = {
   ],
   "latestDate": "2026-06-07",
   "totalDays": 11,
-  "stats": {
-    "total_brands": 26,
-    "latest_date": "2026-06-07"
-  },
   "brands": [
     {
       "brand": "Delonghi",
-      "brand_cn": "德龙",
+      "brand_cn": "Delonghi",
       "rank_today": 1,
       "rank_yesterday": 1,
       "rank_change": 0,
       "best_rank": 1,
-      "avg_rank": 1,
+      "avg_rank": 1.0,
       "trend": [
         1,
         1,
@@ -40,18 +39,18 @@ const BRAND_RANKING_15DAY = {
         1,
         1
       ],
-      "followers": "",
-      "trend_text": "热卖商品8000+件，7000+人购买",
-      "prices": ""
+      "followers": "1万+人",
+      "trend_text": "热卖商品1万+件，1万+人购买",
+      "prices": "2990,4190,2940"
     },
     {
       "brand": "GEMILAI",
-      "brand_cn": "格米莱",
+      "brand_cn": "GEMILAI",
       "rank_today": 2,
       "rank_yesterday": 2,
       "rank_change": 0,
       "best_rank": 2,
-      "avg_rank": 2,
+      "avg_rank": 2.0,
       "trend": [
         2,
         2,
@@ -65,9 +64,9 @@ const BRAND_RANKING_15DAY = {
         2,
         2
       ],
-      "followers": "",
+      "followers": "2000+人",
       "trend_text": "热卖商品3000+件，2000+人购买",
-      "prices": ""
+      "prices": "4599,6599,8599"
     },
     {
       "brand": "Philips",
@@ -76,7 +75,7 @@ const BRAND_RANKING_15DAY = {
       "rank_yesterday": 3,
       "rank_change": 0,
       "best_rank": 3,
-      "avg_rank": 3,
+      "avg_rank": 3.0,
       "trend": [
         3,
         3,
@@ -93,6 +92,31 @@ const BRAND_RANKING_15DAY = {
       "followers": "",
       "trend_text": "热卖商品2000+件，1000+人购买",
       "prices": ""
+    },
+    {
+      "brand": "wigomat",
+      "brand_cn": "wigomat",
+      "rank_today": 3,
+      "rank_yesterday": 17,
+      "rank_change": -14,
+      "best_rank": 3,
+      "avg_rank": 15.7,
+      "trend": [
+        16,
+        16,
+        17,
+        18,
+        19,
+        17,
+        16,
+        17,
+        17,
+        17,
+        3
+      ],
+      "followers": "40万+人",
+      "trend_text": "40万+人正在关注，1000+人加购",
+      "prices": "7549,13349,15649"
     },
     {
       "brand": "NESPRESSO",
@@ -201,7 +225,7 @@ const BRAND_RANKING_15DAY = {
       "rank_yesterday": 8,
       "rank_change": 0,
       "best_rank": 8,
-      "avg_rank": 8,
+      "avg_rank": 8.0,
       "trend": [
         8,
         8,
@@ -420,38 +444,13 @@ const BRAND_RANKING_15DAY = {
       "prices": ""
     },
     {
-      "brand": "wigomat",
-      "brand_cn": "wigomat",
-      "rank_today": 17,
-      "rank_yesterday": 17,
-      "rank_change": 0,
-      "best_rank": 16,
-      "avg_rank": 17,
-      "trend": [
-        16,
-        16,
-        17,
-        18,
-        19,
-        17,
-        16,
-        17,
-        17,
-        17,
-        17
-      ],
-      "followers": "",
-      "trend_text": "飙升20%",
-      "prices": ""
-    },
-    {
       "brand": "Dr.coffee",
       "brand_cn": "咖博士",
       "rank_today": 18,
       "rank_yesterday": 18,
       "rank_change": 0,
       "best_rank": 18,
-      "avg_rank": 18.7,
+      "avg_rank": 23.3,
       "trend": [
         null,
         20,
@@ -476,7 +475,7 @@ const BRAND_RANKING_15DAY = {
       "rank_yesterday": 19,
       "rank_change": 0,
       "best_rank": 19,
-      "avg_rank": 19,
+      "avg_rank": 23.4,
       "trend": [
         null,
         null,
@@ -495,13 +494,38 @@ const BRAND_RANKING_15DAY = {
       "prices": ""
     },
     {
+      "brand": "LELIT",
+      "brand_cn": "Lelit",
+      "rank_today": 19,
+      "rank_yesterday": 20,
+      "rank_change": -1,
+      "best_rank": 19,
+      "avg_rank": 23.5,
+      "trend": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        20,
+        20,
+        19,
+        null,
+        null,
+        null
+      ],
+      "followers": "",
+      "trend_text": "",
+      "prices": ""
+    },
+    {
       "brand": "LA MARZOCCO",
       "brand_cn": "La Marzocco",
       "rank_today": 20,
       "rank_yesterday": 20,
       "rank_change": 0,
       "best_rank": 12,
-      "avg_rank": 15.4,
+      "avg_rank": 18.9,
       "trend": [
         null,
         null,
@@ -522,11 +546,11 @@ const BRAND_RANKING_15DAY = {
     {
       "brand": "艾摩客",
       "brand_cn": "艾摩客",
-      "rank_today": null,
-      "rank_yesterday": null,
-      "rank_change": null,
+      "rank_today": 20,
+      "rank_yesterday": 19,
+      "rank_change": 1,
       "best_rank": 16,
-      "avg_rank": 17.6,
+      "avg_rank": 19.6,
       "trend": [
         17,
         17,
@@ -547,11 +571,11 @@ const BRAND_RANKING_15DAY = {
     {
       "brand": "WMF",
       "brand_cn": "WMF",
-      "rank_today": null,
-      "rank_yesterday": null,
-      "rank_change": null,
+      "rank_today": 20,
+      "rank_yesterday": 19,
+      "rank_change": 1,
       "best_rank": 19,
-      "avg_rank": 19.2,
+      "avg_rank": 22.4,
       "trend": [
         19,
         19,
@@ -572,11 +596,11 @@ const BRAND_RANKING_15DAY = {
     {
       "brand": "CASDON",
       "brand_cn": "凯度",
-      "rank_today": null,
-      "rank_yesterday": null,
-      "rank_change": null,
+      "rank_today": 20,
+      "rank_yesterday": 20,
+      "rank_change": 0,
       "best_rank": 20,
-      "avg_rank": 20,
+      "avg_rank": 24.1,
       "trend": [
         20,
         null,
@@ -597,11 +621,11 @@ const BRAND_RANKING_15DAY = {
     {
       "brand": "Tim Hortons",
       "brand_cn": "Tim Hortons",
-      "rank_today": null,
+      "rank_today": 20,
       "rank_yesterday": null,
-      "rank_change": null,
+      "rank_change": 0,
       "best_rank": 20,
-      "avg_rank": 20,
+      "avg_rank": 24.5,
       "trend": [
         null,
         null,
@@ -611,31 +635,6 @@ const BRAND_RANKING_15DAY = {
         null,
         null,
         null,
-        null,
-        null,
-        null
-      ],
-      "followers": "",
-      "trend_text": "",
-      "prices": ""
-    },
-    {
-      "brand": "LELIT",
-      "brand_cn": "Lelit",
-      "rank_today": null,
-      "rank_yesterday": null,
-      "rank_change": null,
-      "best_rank": 19,
-      "avg_rank": 19.7,
-      "trend": [
-        null,
-        null,
-        null,
-        null,
-        null,
-        20,
-        20,
-        19,
         null,
         null,
         null
@@ -647,11 +646,11 @@ const BRAND_RANKING_15DAY = {
     {
       "brand": "THERMOS",
       "brand_cn": "膳魔师",
-      "rank_today": null,
+      "rank_today": 20,
       "rank_yesterday": null,
-      "rank_change": null,
+      "rank_change": 0,
       "best_rank": 20,
-      "avg_rank": 20,
+      "avg_rank": 24.5,
       "trend": [
         null,
         null,
@@ -669,5 +668,9 @@ const BRAND_RANKING_15DAY = {
       "trend_text": "",
       "prices": ""
     }
-  ]
+  ],
+  "stats": {
+    "total_brands": 26,
+    "latest_date": "2026-06-07"
+  }
 };

@@ -1,18 +1,22 @@
 #!/usr/bin/env python3
 """
-data_to_html.py — 排行榜数据 → 可视化 HTML 页面
+data_to_html.py — 排行榜数据 → 可视化 HTML 页面（增量模式）
 
-读取 daily/ 目录下的所有 CSV/JSON 数据，生成：
-  1. docs/ranking_15day_data.js — JS 数据文件（供 HTML 页面加载）
-  2. docs/index.html           — 可视化趋势页面
+核心策略：
+  1. 读取 docs/ 下已有的 JS 数据文件作为基线（保留用户完整的15天数据）
+  2. 从 daily/ 目录读取新采集的每日数据
+  3. 将新数据增量合并到基线（追加新日期、更新已有产品/品牌）
+  4. 超过15天的旧数据自动滚动移除
+  5. 仅更新数据文件，不覆盖 HTML 页面
 
 用法:
-  python3 scripts/data_to_html.py              # 生成最新页面
+  python3 scripts/data_to_html.py              # 增量更新数据文件
+  python3 scripts/data_to_html.py --full       # 完全重建（从 daily/ 重新生成，忽略基线）
   python3 scripts/data_to_html.py --open       # 生成后启动本地服务器
 
 输出:
   /workspace/rank_data/docs/ranking_15day_data.js
-  /workspace/rank_data/docs/index.html
+  /workspace/rank_data/docs/brand_ranking_15day_data.js
 """
 
 import os, sys, json, glob, re
@@ -25,6 +29,8 @@ from data_standards import SINGLE_RANK_FIELDS, BRAND_RANK_FIELDS
 DATA_DIR = "/workspace/rank_data"
 DAILY_DIR = f"{DATA_DIR}/daily"
 DOCS_DIR = f"{DATA_DIR}/docs"
+
+MAX_DAYS = 15  # 保留最近15天数据
 
 
 def load_all_data() -> dict:
@@ -99,6 +105,441 @@ def estimate_daily_sales(record: dict) -> dict:
         return {"value": daily, "range": f"{lo}-{hi}", "source": "s30", "confidence": conf}
 
     return {"value": 0, "range": "-", "source": "", "confidence": "cl"}
+
+
+def _parse_js_const(content: str, var_name: str) -> dict:
+    """从 JS 文件内容中解析 const 声明的 JSON 对象
+    
+    使用大括号配对方式找到完整的 JSON 对象，避免正则非贪婪提前截断
+    """
+    # 找到变量声明的起始位置
+    pattern = rf'const\s+{var_name}\s*=\s*'
+    match = re.search(pattern, content)
+    if not match:
+        return None
+    
+    start = match.end()
+    # 从 start 位置开始，用大括号配对找到完整 JSON
+    if content[start] != '{':
+        return None
+    
+    depth = 0
+    i = start
+    in_string = False
+    escape_next = False
+    
+    while i < len(content):
+        ch = content[i]
+        if escape_next:
+            escape_next = False
+            i += 1
+            continue
+        if ch == '\\' and in_string:
+            escape_next = True
+            i += 1
+            continue
+        if ch == '"' and not escape_next:
+            in_string = not in_string
+        elif not in_string:
+            if ch == '{':
+                depth += 1
+            elif ch == '}':
+                depth -= 1
+                if depth == 0:
+                    # 找到完整的 JSON 对象
+                    json_str = content[start:i+1]
+                    return json.loads(json_str)
+        i += 1
+    
+    return None
+
+
+def load_existing_js_data() -> dict:
+    """
+    读取 docs/ 下已有的 JS 数据文件作为基线
+
+    返回:
+        {
+            "products": { "brand|model": { 产品数据字典 } },
+            "brands": { "brand_en": { 品牌数据字典 } },
+            "product_dates": ["2026-05-24", ...],
+            "brand_dates": ["2026-05-28", ...],
+        }
+    """
+    result = {
+        "products": {},
+        "brands": {},
+        "product_dates": [],
+        "brand_dates": [],
+    }
+
+    # 读取单品排名基线
+    product_js_path = f"{DOCS_DIR}/ranking_15day_data.js"
+    if os.path.exists(product_js_path):
+        try:
+            with open(product_js_path, "r", encoding="utf-8") as f:
+                content = f.read()
+            data = _parse_js_const(content, "RANKING_15DAY")
+            if data:
+                result["product_dates"] = data.get("dates", [])
+                # 使用数组索引作为 key，避免同 brand|model 的 SKU 变体被覆盖
+                for i, p in enumerate(data.get("products", [])):
+                    key = f"_idx_{i}"  # 唯一 key
+                    p["_brand_model"] = f"{p.get('brand', '')}|{p.get('model', '')}"  # 保存原始 key 用于去重判断
+                    result["products"][key] = p
+                print(f"📖 加载单品基线: {len(result['products'])} 个产品, {len(result['product_dates'])} 天")
+        except Exception as e:
+            print(f"⚠️  读取单品基线失败: {e}")
+
+    # 读取品牌排名基线
+    brand_js_path = f"{DOCS_DIR}/brand_ranking_15day_data.js"
+    if os.path.exists(brand_js_path):
+        try:
+            with open(brand_js_path, "r", encoding="utf-8") as f:
+                content = f.read()
+            data = _parse_js_const(content, "BRAND_RANKING_15DAY")
+            if data:
+                result["brand_dates"] = data.get("dates", [])
+                for b in data.get("brands", []):
+                    key = b.get("brand", "")
+                    result["brands"][key] = b
+                print(f"📖 加载品牌基线: {len(result['brands'])} 个品牌, {len(result['brand_dates'])} 天")
+        except Exception as e:
+            print(f"⚠️  读取品牌基线失败: {e}")
+
+    return result
+
+
+def merge_product_data(baseline: dict, new_data: dict) -> dict:
+    """
+    增量合并单品排名数据
+
+    策略:
+    1. 以基线的 dates 和 products 为基础
+    2. 从 daily/ 读取新日期的数据，追加到对应产品的 trend 中
+    3. 新产品加入 products，已有产品更新最新日期的记录
+    4. 超过 MAX_DAYS 天的旧数据自动移除（日期和 trend 开头截断）
+    5. 重新计算 rank_change, avg_rank, best_rank 等派生字段
+    """
+    existing_dates = list(baseline["product_dates"])
+    existing_products = dict(baseline["products"])  # key -> product dict
+
+    # 收集新数据中有但基线中没有的日期
+    all_new_dates = set()
+    for source in ["pc", "mobile"]:
+        all_new_dates.update(new_data[source].keys())
+
+    # 确定哪些是真正的新日期
+    new_dates = sorted(d for d in all_new_dates if d not in existing_dates)
+    if new_dates:
+        print(f"🆕 发现 {len(new_dates)} 个新日期: {new_dates}")
+
+    # 合并日期列表
+    all_dates = sorted(set(existing_dates + new_dates))
+
+    # 最近 MAX_DAYS 天
+    recent_dates = all_dates[-MAX_DAYS:] if len(all_dates) > MAX_DAYS else all_dates
+    dates_to_remove = [d for d in all_dates if d not in recent_dates]
+    if dates_to_remove:
+        print(f"📅 滚动移除 {len(dates_to_remove)} 个旧日期: {dates_to_remove}")
+
+    # 构建日期→索引映射（用于 trend 数组）
+    date_idx = {d: i for i, d in enumerate(recent_dates)}
+    latest_date = recent_dates[-1] if recent_dates else ""
+    prev_date = recent_dates[-2] if len(recent_dates) >= 2 else ""
+
+    # 将基线产品的 trend 从旧日期格式转换到新日期格式
+    # 旧 trend 对应 existing_dates，新 trend 对应 recent_dates
+    for key, prod in existing_products.items():
+        old_trend = prod.get("trend", [])
+        # 重建：将旧 trend 映射回日期
+        old_dates = existing_dates
+        new_trend = [None] * len(recent_dates)
+
+        for i, old_d in enumerate(old_dates):
+            if old_d in date_idx and i < len(old_trend):
+                new_trend[date_idx[old_d]] = old_trend[i]
+
+        prod["trend"] = new_trend
+
+    # 从新采集数据中提取排名信息，更新到基线产品
+    # 先建立 brand|model → 基线 key 的映射，用于匹配新数据
+    brand_model_to_keys = defaultdict(list)
+    for key, prod in existing_products.items():
+        bm = prod.get("_brand_model", f"{prod.get('brand', '')}|{prod.get('model', '')}")
+        brand_model_to_keys[bm].append(key)
+
+    for source in ["pc", "mobile"]:
+        for date_str in recent_dates:
+            if date_str not in new_data[source]:
+                continue
+            idx = date_idx[date_str]
+            for r in new_data[source][date_str]:
+                brand = r.get("brand", "")
+                model = r.get("model", "")
+                bm_key = f"{brand}|{model}"
+                rank = r.get("rank", 0)
+
+                # 找到匹配的基线产品
+                matched_keys = brand_model_to_keys.get(bm_key, [])
+                
+                if not matched_keys:
+                    # 新产品：创建基础记录
+                    new_key = f"_new_{bm_key}_{len(existing_products)}"
+                    existing_products[new_key] = {
+                        "brand": brand,
+                        "model": model,
+                        "_brand_model": bm_key,
+                        "image_url": r.get("image_url", ""),
+                        "price": r.get("price", 0),
+                        "coupon_price": r.get("coupon_price", ""),
+                        "est_daily": estimate_daily_sales(r),
+                        "rank_today": 0,
+                        "rank_yesterday": None,
+                        "rank_change": 0,
+                        "best_rank": 0,
+                        "avg_rank": 0,
+                        "trend": [None] * len(recent_dates),
+                        "sales_7d": r.get("sales_7d", ""),
+                        "sales_30d": r.get("sales_30d", ""),
+                        "trend_text": r.get("trend", ""),
+                    }
+                    brand_model_to_keys[bm_key].append(new_key)
+                    print(f"  ➕ 新产品: {bm_key}")
+                    # 更新 trend
+                    existing_products[new_key]["trend"][idx] = rank
+                    if date_str == latest_date:
+                        existing_products[new_key]["rank_today"] = rank
+                        existing_products[new_key]["price"] = r.get("price", 0)
+                        existing_products[new_key]["coupon_price"] = r.get("coupon_price", "")
+                        existing_products[new_key]["image_url"] = r.get("image_url", "")
+                        existing_products[new_key]["sales_7d"] = r.get("sales_7d", "")
+                        existing_products[new_key]["sales_30d"] = r.get("sales_30d", "")
+                        existing_products[new_key]["trend_text"] = r.get("trend", "")
+                        existing_products[new_key]["est_daily"] = estimate_daily_sales(r)
+                    if date_str == prev_date:
+                        existing_products[new_key]["rank_yesterday"] = rank
+                else:
+                    # 已有产品：更新匹配到的第一个（通常只有一个，除非有SKU变体）
+                    # 对于有多个匹配的情况，更新 rank_today 最接近的那个
+                    target_key = matched_keys[0]
+                    if len(matched_keys) > 1:
+                        # 多个匹配，找 trend 中该日期还没有数据的那个
+                        for mk in matched_keys:
+                            if existing_products[mk]["trend"][idx] is None:
+                                target_key = mk
+                                break
+                    
+                    existing_products[target_key]["trend"][idx] = rank
+
+                    if date_str == latest_date:
+                        existing_products[target_key]["rank_today"] = rank
+                        existing_products[target_key]["price"] = r.get("price", existing_products[target_key].get("price", 0))
+                        existing_products[target_key]["coupon_price"] = r.get("coupon_price", existing_products[target_key].get("coupon_price", ""))
+                        existing_products[target_key]["image_url"] = r.get("image_url", existing_products[target_key].get("image_url", ""))
+                        existing_products[target_key]["sales_7d"] = r.get("sales_7d", existing_products[target_key].get("sales_7d", ""))
+                        existing_products[target_key]["sales_30d"] = r.get("sales_30d", existing_products[target_key].get("sales_30d", ""))
+                        existing_products[target_key]["trend_text"] = r.get("trend", existing_products[target_key].get("trend_text", ""))
+                        existing_products[target_key]["est_daily"] = estimate_daily_sales(r)
+
+                    if date_str == prev_date:
+                        existing_products[target_key]["rank_yesterday"] = rank
+
+    # 重新计算派生字段
+    for key, prod in existing_products.items():
+        trend = prod.get("trend", [])
+        
+        # 清理内部字段（不写入 JS 输出）
+        prod.pop("_brand_model", None)
+
+        # rank_today：取最新日期的排名
+        for i in range(len(trend) - 1, -1, -1):
+            if trend[i] is not None:
+                prod["rank_today"] = trend[i]
+                break
+
+        # rank_yesterday：取倒数第二个有数据的日期
+        found_today = False
+        for i in range(len(trend) - 1, -1, -1):
+            if trend[i] is not None:
+                if found_today:
+                    prod["rank_yesterday"] = trend[i]
+                    break
+                found_today = True
+        if not found_today:
+            prod["rank_yesterday"] = None
+
+        # rank_change
+        rt = prod.get("rank_today", 0)
+        ry = prod.get("rank_yesterday")
+        if ry is not None and rt > 0:
+            prod["rank_change"] = rt - ry
+        else:
+            prod["rank_change"] = 0
+
+        # best_rank
+        valid_ranks = [r for r in trend if r is not None and r > 0]
+        prod["best_rank"] = min(valid_ranks) if valid_ranks else 0
+
+        # avg_rank（有数据取实际，无数据按35算）
+        rank_sum = 0
+        for r in trend:
+            rank_sum += r if (r is not None and r > 0) else 35
+        prod["avg_rank"] = round(rank_sum / len(trend), 1) if trend else 0
+
+    # 排序
+    products_list = list(existing_products.values())
+    products_list.sort(key=lambda x: x.get("rank_today", 99) if x.get("rank_today", 0) > 0 else 99)
+
+    # 统计
+    brands_seen = set(p.get("brand", "") for p in products_list if p.get("brand"))
+    stats = {
+        "total_products": len(products_list),
+        "brand_count": len(brands_seen),
+        "latest_date": latest_date,
+    }
+
+    return {
+        "dates": recent_dates,
+        "latestDate": latest_date,
+        "totalDays": len(all_dates),
+        "products": products_list,
+        "stats": stats,
+    }
+
+
+def merge_brand_data(baseline: dict, new_data: dict) -> dict:
+    """
+    增量合并品牌排名数据
+
+    策略与 merge_product_data 类似
+    """
+    existing_dates = list(baseline["brand_dates"])
+    existing_brands = dict(baseline["brands"])  # brand_en -> brand dict
+
+    # 收集新日期
+    all_new_dates = set(new_data["brand"].keys())
+    new_dates = sorted(d for d in all_new_dates if d not in existing_dates)
+    if new_dates:
+        print(f"🆕 品牌榜发现 {len(new_dates)} 个新日期: {new_dates}")
+
+    all_dates = sorted(set(existing_dates + new_dates))
+    recent_dates = all_dates[-MAX_DAYS:] if len(all_dates) > MAX_DAYS else all_dates
+
+    date_idx = {d: i for i, d in enumerate(recent_dates)}
+    latest_date = recent_dates[-1] if recent_dates else ""
+    prev_date = recent_dates[-2] if len(recent_dates) >= 2 else ""
+
+    # 将基线品牌的 trend 从旧日期格式转换到新日期格式
+    for key, brand in existing_brands.items():
+        old_trend = brand.get("trend", [])
+        old_dates = existing_dates
+        new_trend = [None] * len(recent_dates)
+
+        for i, old_d in enumerate(old_dates):
+            if old_d in date_idx and i < len(old_trend):
+                new_trend[date_idx[old_d]] = old_trend[i]
+
+        brand["trend"] = new_trend
+
+    # 从新采集数据中更新
+    for date_str in recent_dates:
+        if date_str not in new_data["brand"]:
+            continue
+        idx = date_idx[date_str]
+        for r in new_data["brand"][date_str]:
+            brand_en = r.get("brand_en", "")
+            if not brand_en:
+                continue
+            rank = r.get("rank", 0)
+
+            if brand_en not in existing_brands:
+                existing_brands[brand_en] = {
+                    "brand": brand_en,
+                    "brand_cn": r.get("brand_cn", ""),
+                    "rank_today": 0,
+                    "rank_yesterday": None,
+                    "rank_change": 0,
+                    "best_rank": 0,
+                    "avg_rank": 0,
+                    "trend": [None] * len(recent_dates),
+                    "followers": "",
+                    "trend_text": "",
+                    "prices": "",
+                }
+                print(f"  ➕ 新品牌: {brand_en}")
+
+            existing_brands[brand_en]["trend"][idx] = rank
+
+            if date_str == latest_date:
+                existing_brands[brand_en]["rank_today"] = rank
+                existing_brands[brand_en]["brand_cn"] = r.get("brand_cn", existing_brands[brand_en].get("brand_cn", ""))
+                existing_brands[brand_en]["prices"] = r.get("prices", existing_brands[brand_en].get("prices", ""))
+                # 趋势文字
+                trend_text = r.get("description", "")
+                followers = r.get("followers", "")
+                if not followers and trend_text:
+                    m = re.search(r'([\d万+]+人)', trend_text)
+                    if m:
+                        followers = m.group(1)
+                existing_brands[brand_en]["trend_text"] = trend_text
+                existing_brands[brand_en]["followers"] = followers
+
+            if date_str == prev_date:
+                existing_brands[brand_en]["rank_yesterday"] = rank
+
+    # 重新计算派生字段
+    for key, brand in existing_brands.items():
+        trend = brand.get("trend", [])
+
+        # rank_today
+        for i in range(len(trend) - 1, -1, -1):
+            if trend[i] is not None:
+                brand["rank_today"] = trend[i]
+                break
+
+        # rank_yesterday
+        found_today = False
+        for i in range(len(trend) - 1, -1, -1):
+            if trend[i] is not None:
+                if found_today:
+                    brand["rank_yesterday"] = trend[i]
+                    break
+                found_today = True
+
+        # rank_change
+        rt = brand.get("rank_today", 0)
+        ry = brand.get("rank_yesterday")
+        if ry is not None and rt > 0:
+            brand["rank_change"] = rt - ry
+        else:
+            brand["rank_change"] = 0
+
+        # best_rank
+        valid_ranks = [r for r in trend if r is not None and r > 0]
+        brand["best_rank"] = min(valid_ranks) if valid_ranks else 0
+
+        # avg_rank（无数据按25算）
+        rank_sum = 0
+        for r in trend:
+            rank_sum += r if (r is not None and r > 0) else 25
+        brand["avg_rank"] = round(rank_sum / len(trend), 1) if trend else 0
+
+    brands_list = list(existing_brands.values())
+    brands_list.sort(key=lambda x: x.get("rank_today", 99) if x.get("rank_today", 0) > 0 else 99)
+
+    stats = {
+        "total_brands": len(brands_list),
+        "latest_date": latest_date,
+    }
+
+    return {
+        "dates": recent_dates,
+        "latestDate": latest_date,
+        "totalDays": len(all_dates),
+        "brands": brands_list,
+        "stats": stats,
+    }
 
 
 def build_15day_data(data: dict) -> dict:
@@ -382,10 +823,22 @@ def build_brand_15day_data(data: dict) -> dict:
     }
 
 
-def generate_js_file(data):
-    """生成 ranking_15day_data.js + brand_ranking_15day_data.js"""
-    result_15day = build_15day_data(data)
-    brand_15day = build_brand_15day_data(data)
+def generate_js_file(data, full_rebuild=False):
+    """生成 ranking_15day_data.js + brand_ranking_15day_data.js
+    
+    Args:
+        data: 从 daily/ 加载的原始数据
+        full_rebuild: True=完全重建（忽略基线），False=增量合并
+    """
+    if full_rebuild:
+        print("🔄 完全重建模式（忽略基线）")
+        result_15day = build_15day_data(data)
+        brand_15day = build_brand_15day_data(data)
+    else:
+        print("📌 增量合并模式（保留基线数据）")
+        baseline = load_existing_js_data()
+        result_15day = merge_product_data(baseline, data)
+        brand_15day = merge_brand_data(baseline, data)
 
     # 单页JS数据
     all_dates = set()
@@ -894,8 +1347,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 
 
 def main():
+    full_rebuild = "--full" in sys.argv
+
     print("╔════════════════════════════════════════╗")
-    print("║   排行榜数据 → 可视化页面              ║")
+    print(f"║   排行榜数据 → 可视化页面 ({'完全重建' if full_rebuild else '增量合并'})    ║")
     print(f"║   运行时间: {datetime.now().strftime('%Y-%m-%d %H:%M')}      ║")
     print("╚════════════════════════════════════════╝")
 
@@ -909,16 +1364,17 @@ def main():
     print(f"   手机端: {sum(len(v) for v in data['mobile'].values())} 条 / {mobile_days} 天")
     print(f"   品牌榜: {sum(len(v) for v in data['brand'].values())} 条 / {brand_days} 天")
 
-    js_path = generate_js_file(data)
-    html_path = generate_html()
+    js_path = generate_js_file(data, full_rebuild=full_rebuild)
 
-    print(f"\n✅ 生成完成！")
+    # 不再自动生成 HTML 页面（用户设计，不应覆盖）
+    # html_path = generate_html()
+
+    print(f"\n✅ 数据文件生成完成！")
     print(f"   📄 {js_path}")
-    print(f"   📄 {html_path}")
+    print(f"   📄 {DOCS_DIR}/brand_ranking_15day_data.js")
     print(f"\n🌐 页面:")
     print(f"   📄 单品排名: https://poonee.github.io/tmall-rank-data/")
     print(f"   📄 品牌排行: https://poonee.github.io/tmall-rank-data/brand_ranking_15day.html")
-    print(f"   或在项目目录下运行: python3 -m http.server 8080")
 
     # Git commit after generation
     import subprocess
@@ -928,8 +1384,9 @@ def main():
     )
     if result.stdout.strip():
         subprocess.run(["git", "add", "-A"], cwd=DATA_DIR)
-        subprocess.run(["git", "commit", "-m", f"viz: 更新可视化页面 {datetime.now().strftime('%Y-%m-%d %H:%M')}", "--quiet"], cwd=DATA_DIR)
-        print(f"\n📦 Git commit: 可视化页面已更新")
+        msg = f"viz: {'完全重建' if full_rebuild else '增量更新'}数据 {datetime.now().strftime('%Y-%m-%d %H:%M')}"
+        subprocess.run(["git", "commit", "-m", msg, "--quiet"], cwd=DATA_DIR)
+        print(f"\n📦 Git commit: {msg}")
 
 
 if __name__ == "__main__":
