@@ -153,22 +153,38 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
         return;
     }
 
-    // ── 统计卡片 ──
+    // ── 工具：获取品牌在指定日期的排名 ──
+    function getRankOnDate(b, dateIdx) {
+        return (b.trend && dateIdx >= 0 && dateIdx < b.trend.length && b.trend[dateIdx] !== null && b.trend[dateIdx] !== undefined) ? b.trend[dateIdx] : null;
+    }
+
+    // ── 工具：获取当前选中的日期索引 ──
+    function getSelectedDateIdx() {
+        const sel = document.getElementById('dateFilter');
+        const date = sel ? sel.value : D.latestDate;
+        const idx = D.dates.indexOf(date);
+        return idx >= 0 ? idx : D.dates.length - 1;
+    }
+
+    // ── 统计卡片（基于选定日期动态计算） ──
     function renderStats() {
-        const stats = D.stats;
-        const top1 = D.brands.find(p => p.rank_today === 1);
+        const dateIdx = getSelectedDateIdx();
+        const selectedDate = D.dates[dateIdx];
+        const brandsOnDate = D.brands.filter(b => getRankOnDate(b, dateIdx) !== null);
+        const sortedOnDate = brandsOnDate.slice().sort((a, b) => getRankOnDate(a, dateIdx) - getRankOnDate(b, dateIdx));
+        const top1 = sortedOnDate[0] || null;
         const isWigomat = top1 && top1.brand === 'wigomat';
         const caret = top1 && top1.rank_change !== undefined && top1.rank_change !== null
             ? (top1.rank_change < 0 ? '↑' : top1.rank_change > 0 ? '↓' : '→') : '';
         const html = `
             <div class="stat-card${isWigomat ? ' wigomat' : ''}">
-                <div class="stat-value">${stats.total_brands}</div><div class="stat-label">在榜品牌</div>
+                <div class="stat-value">${brandsOnDate.length}</div><div class="stat-label">当日品牌</div>
             </div>
             <div class="stat-card">
-                <div class="stat-value">${stats.latest_date || '-'}</div><div class="stat-label">最新日期</div>
+                <div class="stat-value">${selectedDate || '-'}</div><div class="stat-label">显示日期</div>
             </div>
             <div class="stat-card${isWigomat ? ' wigomat' : ''}">
-                <div class="stat-value">${top1 ? top1.brand : '-'} ${caret}</div><div class="stat-label">当前榜首</div>
+                <div class="stat-value">${top1 ? top1.brand : '-'} ${caret}</div><div class="stat-label">当日榜首</div>
             </div>
             <div class="stat-card">
                 <div class="stat-value">${D.dates.length}天</div><div class="stat-label">采集天数</div>
@@ -226,42 +242,50 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
         return '<span class="down">↓' + change + '</span>';
     }
 
-    // ── 主表格 ──
+    // ── 主表格（基于选定日期动态渲染） ──
     function renderTable() {
+        const dateIdx = getSelectedDateIdx();
+        const prevDateIdx = dateIdx > 0 ? dateIdx - 1 : -1;
         const brandFilter = (document.getElementById('brandFilter').value || '').toLowerCase();
 
-        let brands = D.brands;
+        // 只保留该日期有排名数据的品牌，按该日期的排名排序，限20条
+        let brands = D.brands
+            .filter(b => getRankOnDate(b, dateIdx) !== null)
+            .sort((a, b) => getRankOnDate(a, dateIdx) - getRankOnDate(b, dateIdx))
+            .slice(0, 20);
+
         if (brandFilter) {
-            brands = brands.filter(p =>
-                p.brand.toLowerCase().includes(brandFilter)
-            );
+            brands = brands.filter(b => b.brand.toLowerCase().includes(brandFilter));
         }
 
         let html = '';
-        brands.forEach((p) => {
-            const isWigomat = p.brand === 'wigomat';
+        brands.forEach((b) => {
+            const rank = getRankOnDate(b, dateIdx);
+            const prevRank = prevDateIdx >= 0 ? getRankOnDate(b, prevDateIdx) : null;
+            const change = (prevRank !== null && rank !== null) ? rank - prevRank : null;
+            const isWigomat = b.brand === 'wigomat';
             const rowClass = isWigomat ? 'wigomat-row' : '';
-            const rankClass = p.rank_today <= 3 ? 'r' + p.rank_today : 'rn';
-            const badgeExtra = p.rank_today <= 3 ? ' top3' : '';
+            const rankClass = rank <= 3 ? 'r' + rank : 'rn';
+            const badgeExtra = rank <= 3 ? ' top3' : '';
             const wigomatBadge = isWigomat ? '<span class="wigomat-badge">⭐</span>' : '';
             const brandLinkClass = isWigomat ? 'brand-link wigomat-link' : 'brand-link';
 
             html += '<tr class="' + rowClass + '">' +
-                '<td><span class="rank-badge' + badgeExtra + ' ' + rankClass + '">' + p.rank_today + '</span></td>' +
-                '<td style="font-size:.82em"><a class="' + brandLinkClass + '" href="?brand=' + encodeURIComponent(p.brand) + '">' +
-                    p.brand + '</a>' + wigomatBadge + '</td>' +
-                '<td>' + (p.trend_text ? '<span class="trend-' + (p.trend_text.indexOf('降')>-1?'down':p.trend_text.indexOf('升')>-1?'up':'flat') + '">' +
-                    p.trend_text + '</span>' : '<span class="empty-cell">-</span>') + '</td>' +
-                '<td>' + (p.followers || '<span class="empty-cell">-</span>') + '</td>' +
-                '<td>' + renderRankChange(p.rank_change) + '</td>' +
-                '<td class="best-cell">' + p.best_rank + '</td>' +
-                '<td class="avg-cell">' + p.avg_rank + '</td>' +
-                '<td class="sparkline-cell">' + makeSparkline(p.trend) + '</td>' +
+                '<td><span class="rank-badge' + badgeExtra + ' ' + rankClass + '">' + rank + '</span></td>' +
+                '<td style="font-size:.82em"><a class="' + brandLinkClass + '" href="?brand=' + encodeURIComponent(b.brand) + '">' +
+                    b.brand + '</a>' + wigomatBadge + '</td>' +
+                '<td>' + (b.trend_text ? '<span class="trend-' + (b.trend_text.indexOf('降')>-1?'down':b.trend_text.indexOf('升')>-1?'up':'flat') + '">' +
+                    b.trend_text + '</span>' : '<span class="empty-cell">-</span>') + '</td>' +
+                '<td>' + (b.followers || '<span class="empty-cell">-</span>') + '</td>' +
+                '<td>' + renderRankChange(change) + '</td>' +
+                '<td class="best-cell">' + b.best_rank + '</td>' +
+                '<td class="avg-cell">' + b.avg_rank + '</td>' +
+                '<td class="sparkline-cell">' + makeSparkline(b.trend) + '</td>' +
                 '</tr>';
         });
 
         if (!html) {
-            html = '<tr><td colspan="8" style="text-align:center;padding:30px;color:#999">无匹配数据</td></tr>';
+            html = '<tr><td colspan="8" style="text-align:center;padding:30px;color:#999">该日期无上榜数据</td></tr>';
         }
 
         document.getElementById('tableBody').innerHTML = html;
@@ -307,6 +331,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
         }
     }
 
+    // ── 全量重新渲染 ──
+    function fullRender() {
+        renderStats();
+        renderTable();
+    }
+
     // ── 初始化 ──
     renderStats();
     renderDateFilter();
@@ -314,8 +344,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
     initColumnResize();
     renderFooter();
 
-    document.getElementById('refreshBtn').addEventListener('click', renderTable);
+    document.getElementById('refreshBtn').addEventListener('click', fullRender);
     document.getElementById('brandFilter').addEventListener('input', renderTable);
+    document.getElementById('dateFilter').addEventListener('change', fullRender);
 
 })();
 </script>
