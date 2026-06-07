@@ -1,0 +1,22 @@
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+
+# Environment
+.env
+*.env.local
+
+# Raw debug files (可以删)
+daily/*_raw.txt
+
+# Git keep (目录占位符)
+!.gitkeep

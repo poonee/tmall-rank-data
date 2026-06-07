@@ -1,0 +1,72 @@
+[
+  {
+    "date": "2026-06-07",
+    "source": "pc",
+    "rank": 1,
+    "brand": "GEMILAI",
+    "model": "双瞳商用咖啡机",
+    "price": 4599,
+    "coupon_price": "",
+    "sales_7d": "300+件",
+    "sales_30d": "",
+    "trend": "蝉联榜首8周",
+    "image_url": "",
+    "raw_text": "TOP1蝉联榜首8周值得买近7天销售300+件格米莱双瞳商用咖啡机...¥45996期免息"
+  },
+  {
+    "date": "2026-06-07",
+    "source": "pc",
+    "rank": 2,
+    "brand": "wigomat",
+    "model": "W12商用咖啡机",
+    "price": 11349,
+    "coupon_price": "",
+    "sales_7d": "200+件",
+    "sales_30d": "",
+    "trend": "排名上升2位",
+    "image_url": "",
+    "raw_text": "TOP2排名上升2位近7天销售200+件wigomatW12商用咖啡机...¥11349"
+  },
+  {
+    "date": "2026-06-07",
+    "source": "pc",
+    "rank": 3,
+    "brand": "Hauswirt",
+    "model": "C9Pro双锅炉咖啡机",
+    "price": 12999,
+    "coupon_price": "",
+    "sales_7d": "150+件",
+    "sales_30d": "",
+    "trend": "霸榜前三",
+    "image_url": "",
+    "raw_text": "TOP3霸榜前三值得买近7天销售150+件海氏C9Pro双锅炉咖啡机...¥12999"
+  },
+  {
+    "date": "2026-06-07",
+    "source": "pc",
+    "rank": 4,
+    "brand": "Delonghi",
+    "model": "ECAM",
+    "price": 8999,
+    "coupon_price": "",
+    "sales_7d": "100+件",
+    "sales_30d": "",
+    "trend": "",
+    "image_url": "",
+    "raw_text": "TOP4近7天销售100+件Delonghi德龙ECAM...¥8999"
+  },
+  {
+    "date": "2026-06-07",
+    "source": "pc",
+    "rank": 5,
+    "brand": "Barsetto",
+    "model": "百胜图",
+    "price": 6999,
+    "coupon_price": "",
+    "sales_7d": "80+件",
+    "sales_30d": "",
+    "trend": "",
+    "image_url": "",
+    "raw_text": "TOP5近7天销售80+件百胜图Barsetto...¥6999"
+  }
+]

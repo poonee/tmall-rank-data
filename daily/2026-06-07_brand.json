@@ -1,0 +1,35 @@
+[
+  {
+    "date": "2026-06-07",
+    "source": "brand",
+    "rank": 1,
+    "brand_cn": "Delonghi",
+    "brand_en": "Delonghi",
+    "description": "热卖商品1万+件，1万+人购买",
+    "followers": "",
+    "trend": "",
+    "prices": "2990,4190,2940"
+  },
+  {
+    "date": "2026-06-07",
+    "source": "brand",
+    "rank": 2,
+    "brand_cn": "GEMILAI",
+    "brand_en": "GEMILAI",
+    "description": "热卖商品3000+件，2000+人购买",
+    "followers": "",
+    "trend": "",
+    "prices": "4599,6599,8599"
+  },
+  {
+    "date": "2026-06-07",
+    "source": "brand",
+    "rank": 3,
+    "brand_cn": "wigomat",
+    "brand_en": "wigomat",
+    "description": "40万+人正在关注，1000+人加购",
+    "followers": "40万+人",
+    "trend": "",
+    "prices": "7549,13349,15649"
+  }
+]

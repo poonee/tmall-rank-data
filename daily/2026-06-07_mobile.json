@@ -1,0 +1,67 @@
+[
+  {
+    "date": "2026-06-07",
+    "source": "mobile",
+    "rank": 1,
+    "price": 13349,
+    "coupon_price": "11349",
+    "sales_7d": "",
+    "sales_30d": "1000+",
+    "trend": "蝉联榜首",
+    "brand": "wigomat",
+    "model": "W12商用咖啡机",
+    "raw_text": "蝉联榜首wigomatW12商用咖啡机¥13349券后¥11349"
+  },
+  {
+    "date": "2026-06-07",
+    "source": "mobile",
+    "rank": 2,
+    "price": 5599,
+    "coupon_price": "4599",
+    "sales_7d": "",
+    "sales_30d": "1000+",
+    "trend": "",
+    "brand": "GEMILAI",
+    "model": "双瞳商用咖啡机",
+    "raw_text": "格米莱双瞳商用咖啡机¥5599券后¥4599近30天内销量1000+件"
+  },
+  {
+    "date": "2026-06-07",
+    "source": "mobile",
+    "rank": 3,
+    "price": 14999,
+    "coupon_price": "12999",
+    "sales_7d": "",
+    "sales_30d": "",
+    "trend": "",
+    "brand": "Hauswirt",
+    "model": "C9Pro双锅炉家用商用咖啡机",
+    "raw_text": "海氏C9Pro双锅炉家用商用咖啡机¥14999券后¥12999"
+  },
+  {
+    "date": "2026-06-07",
+    "source": "mobile",
+    "rank": 4,
+    "price": 11349,
+    "coupon_price": "9349",
+    "sales_7d": "",
+    "sales_30d": "900+",
+    "trend": "",
+    "brand": "wigomat",
+    "model": "W12商用咖啡机",
+    "raw_text": "wigomatW12商用咖啡机¥11349券后¥9349"
+  },
+  {
+    "date": "2026-06-07",
+    "source": "mobile",
+    "rank": 5,
+    "price": 10499,
+    "coupon_price": "8999",
+    "sales_7d": "",
+    "sales_30d": "800+",
+    "trend": "",
+    "brand": "Delonghi",
+    "model": "ECAM",
+    "raw_text": "Delonghi德龙ECAM...¥10499券后¥8999"
+  }
+]
