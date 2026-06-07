@@ -1,189 +1,370 @@
 /**
- * 重新从原始用户数据生成干净的 RANKING_15DAY 格式
+ * 从原始用户数据生成完整的 RANKING_15DAY 和 BRAND_RANKING_15DAY 格式
  * 
- * 修复问题：
- * 1. 去重：品牌|型号 相同（去掉 _# 后缀）的合并
- * 2. 过滤：只保留最新日期有排名数据的产品（TOP 30）
- * 3. 按最新日期排名排序
+ * 核心改进（vs 旧版 clean_and_convert.js）：
+ * 1. 保留所有曾经上榜的产品/品牌（不只保留最新日期有排名的）
+ * 2. 每天同品牌同型号出现多次时取最佳排名（如德龙EC9555M同一天4次）
+ * 3. 合并同一品牌的不同中英文名（如 Aeomjk/艾摩客）
+ * 4. 品牌映射更完整
  */
 
 const fs = require('fs');
 
+// ============ 品牌名映射（中文→英文统一） ============
 const BRAND_MAP = {
-  "格米莱": "GEMILAI", "海氏": "Hauswirt", "百胜图": "Barsetto",
-  "柏翠": "Petrus", "西屋": "Westinghouse", "火箭": "Rocket",
-  "惠家": "Welhome", "温豆季": "Wendouji", "技诺": "Jino",
-  "雪特朗": "Stelang", "突尼": "Tuni", "迈拓": "MaiTuo",
-  "德颐": "DEYI", "客浦": "Kepu", "艾尔菲德": "ErFeide",
-  "佩罗奇": "Peiluoqi", "飞利浦": "Philips", "施耐德": "Schneider",
-  "咖博士": "Dr.coffee", "德龙": "Delonghi", "咖乐美": "KALERM",
-  "连咖啡": "Liankafei", "wigomat": "wigomat", "Barsetto": "Barsetto",
-  "Delonghi": "Delonghi", "Philips": "Philips", "飞利浦(PHILIPS)": "Philips"
+  "格米莱": "GEMILAI", "柏翠": "Petrus", "百胜图": "Barsetto",
+  "海氏": "Hauswirt", "佩罗奇": "Peiluoqi", "德龙": "Delonghi",
+  "西屋": "Westinghouse", "温豆季": "Wendouji", "技诺": "Jino",
+  "雪特朗": "Stelang", "咖博士": "Dr.coffee", "惠家": "Welhome",
+  "连咖啡": "Liankafei", "飞利浦": "Philips", "咖乐美": "KALERM",
+  "突尼": "Tuni", "迈拓": "Macap", "德颐": "Deyi",
+  "火箭": "Rocket", "客浦": "Capresso", "艾尔菲德": "Alphafe",
+  "施耐德": "Schneider", "小熊": "Bear", "wigomat": "wigomat",
+  "奈斯派索": "NESPRESSO", "铂富": "Breville", "极萃师": "JICCSI",
+  "露茉": "Lumos Bari", "咖啡自由": "KAxFREE", "赛普达": "SAPOUDR",
+  "SMEG": "SMEG", "艾摩客": "Aeomjk", "WMF": "WMF",
+  "凯度": "CASDON", "卡伦特": "Kalenter", "Aeomjk": "Aeomjk",
+  "La Marzocco": "LA MARZOCCO", "Lelit": "LELIT", "膳魔师": "THERMOS",
+  "Tim Hortons": "Tim Hortons",
+  "Barsetto": "Barsetto", "Delonghi": "Delonghi", "Philips": "Philips",
 };
 
-function cleanModel(model) {
-  // 去掉 _# 后缀，如 "BAE02S_#3228" -> "BAE02S"
-  return model.replace(/_[a-zA-Z0-9#]+$/, '');
-}
-
-function makeKey(brand, model) {
-  return (brand || '') + '|' + cleanModel(model || '');
-}
-
-// ── 加载原始数据 ──
-const rawContent = fs.readFileSync('/tmp/ranking_15day_data.js', 'utf8');
-let RAW;
-eval('RAW = ' + rawContent.replace('var RANKING_15DAY_DATA =', ''));
-
-const dates = RAW.dates;
-const latestDate = dates[dates.length - 1];
-const prevDate = dates.length >= 2 ? dates[dates.length - 2] : null;
-
-console.log(`原始数据: ${Object.keys(RAW.products).length} 个产品, ${dates.length} 天`);
-console.log(`最新日期: ${latestDate}`);
-
-// ── 按清理后的 brand|model 分组 ──
-const groups = {};
-Object.entries(RAW.products).forEach(([key, p]) => {
-  const brandCN = p.brand;
-  const brandEN = BRAND_MAP[brandCN] || brandCN;
-  const groupKey = makeKey(brandEN, p.model);
-
-  if (!groups[groupKey]) {
-    groups[groupKey] = { brand: brandEN, model: cleanModel(p.model), entries: [] };
-  }
-  groups[groupKey].entries.push(p);
-});
-
-console.log(`去重后: ${Object.keys(groups).length} 个唯一产品\n`);
-
-// ── 统计每个产品的最新日期排名 ──
-const ranked = [];
-Object.entries(groups).forEach(([groupKey, g]) => {
-  const entries = g.entries;
-  
-  // 找出最新日期有排名的条目
-  let bestEntry = null;
-  let latestRank = null;
-  let combinedTrend = null;
-  
-  // 优先找有最新日期排名的条目
-  const withLatest = entries.filter(e => e.history && e.history[latestDate]);
-  if (withLatest.length > 0) {
-    // 有多个同型号产品都有最新日期，取排名最高的
-    withLatest.sort((a, b) => a.history[latestDate].rank - b.history[latestDate].rank);
-    bestEntry = withLatest[0];
-    latestRank = bestEntry.history[latestDate].rank;
-  } else {
-    // 没有最新日期数据 → 跳过（不在榜）
-    return;
-  }
-
-  // ── 合并历史趋势 ──
-  // 对于每个日期，从所有条目中取最佳的排名数据
-  const trend = dates.map(d => {
-    const dayEntries = entries.filter(e => e.history && e.history[d]);
-    if (dayEntries.length === 0) return null;
-    // 取该日期排名最高的（排名数字最小）
-    dayEntries.sort((a, b) => a.history[d].rank - b.history[d].rank);
-    return dayEntries[0].history[d].rank;
-  });
-
-  // ── 最新日期详情 ──
-  const latestHist = bestEntry.history[latestDate];
-  const prevHist = prevDate && bestEntry.history[prevDate] ? bestEntry.history[prevDate] : null;
-  
-  // 昨日排名
-  const prevRank = prevHist ? prevHist.rank : null;
-  
-  // 排名变化（正=上升，负=下降）
-  const rankChange = prevRank !== null ? prevRank - latestRank : null;
-  
-  // 最佳排名
-  const validRanks = trend.filter(v => v !== null);
-  const bestRank = validRanks.length > 0 ? Math.min(...validRanks) : 999;
-
-  // 平均排名（无数据按35算）
-  let rankSum = 0;
-  for (let i = 0; i < dates.length; i++) {
-    rankSum += trend[i] !== null ? trend[i] : 35;
-  }
-  const avgRank = Math.round(rankSum / dates.length * 10) / 10;
-
-  // 价格
-  const price = latestHist.price ? parseFloat(String(latestHist.price).replace(/[¥,]/g, '')) : 0;
-
-  // 销量
-  const sales7d = latestHist.sales || '';
-  const sales30d = latestHist.sales_30d || '';
-
-  // est_daily
-  let estDaily = null;
-  if (latestHist.est) {
-    estDaily = {
-      value: latestHist.est.v || 0,
-      range: (latestHist.est.lo || '-') + '-' + (latestHist.est.hi || '-'),
-      source: latestHist.est.s && latestHist.est.s[0] ? latestHist.est.s[0].replace('7d', 's7').replace('30d', 's30').replace('year', 'sy') : 's7',
-      confidence: latestHist.est.c === 'l' ? 'cl' : latestHist.est.c === 'm' ? 'cm' : latestHist.est.c === 'h' ? 'ch' : 'cl'
-    };
-  }
-
-  // 趋势文字
-  let trendText = '';
-  if (latestHist.est && latestHist.est.m) trendText = latestHist.est.m;
-  else if (sales30d) trendText = sales30d;
-  else if (sales7d) trendText = sales7d;
-
-  ranked.push({
-    brand: g.brand,
-    model: g.model,
-    image_url: bestEntry.img || '',
-    price: isNaN(price) ? 0 : price,
-    est_daily: estDaily,
-    rank_today: latestRank,
-    rank_yesterday: prevRank,
-    rank_change: rankChange,
-    best_rank: bestRank,
-    avg_rank: avgRank,
-    trend: trend,
-    sales_7d: sales7d,
-    sales_30d: sales30d,
-    trend_text: trendText
-  });
-});
-
-// ── 按最新排名排序 ──
-ranked.sort((a, b) => (a.rank_today || 999) - (b.rank_today || 999));
-
-// ── 统计 ──
-const brandsSet = new Set(ranked.map(p => p.brand));
-
-const result = {
-  dates: dates,
-  latestDate: latestDate,
-  totalDays: dates.length,
-  products: ranked,
-  stats: {
-    total_products: ranked.length,
-    brand_count: brandsSet.size,
-    latest_date: latestDate
-  }
+// 中文品牌名（用于显示）
+const BRAND_CN = {
+  "Delonghi": "德龙", "GEMILAI": "格米莱", "Philips": "飞利浦",
+  "Barsetto": "百胜图", "Petrus": "柏翠", "NESPRESSO": "奈斯派索",
+  "Breville": "铂富", "Hauswirt": "海氏", "JICCSI": "极萃师",
+  "Lumos Bari": "露茉", "KAxFREE": "咖啡自由", "Bear": "小熊",
+  "SAPOUDR": "赛普达", "Stelang": "雪特朗", "SMEG": "SMEG",
+  "wigomat": "wigomat", "Aeomjk": "Aeomjk", "WMF": "WMF",
+  "CASDON": "凯度", "Dr.coffee": "咖博士", "Kalenter": "卡伦特",
+  "LA MARZOCCO": "La Marzocco", "LELIT": "Lelit", "THERMOS": "膳魔师",
+  "Tim Hortons": "Tim Hortons",
 };
 
-// ── 输出 ──
-const output = 'const RANKING_15DAY = ' + JSON.stringify(result, null, 2) + ';\n';
-fs.writeFileSync('/tmp/clean_ranking_15day_data.js', output);
+function normalizeBrand(name) {
+  return BRAND_MAP[name] || name;
+}
 
-console.log('=== 清理完成 ===');
-console.log(`产品数: ${ranked.length} (去重+过滤后)`);
-console.log(`品牌数: ${brandsSet.size}`);
-console.log(`有最新日期排名: ${ranked.filter(p => p.rank_today !== null).length}`);
-console.log(`文件大小: ${fs.statSync('/tmp/clean_ranking_15day_data.js').size} bytes`);
-console.log(`\nTOP 5:`);
-ranked.slice(0, 5).forEach(p => {
-  console.log(`  #${p.rank_today} ${p.brand} ${p.model} ¥${p.price}`);
+function parsePrice(priceStr) {
+  if (!priceStr || priceStr === '-' || priceStr === '') return 0;
+  const s = String(priceStr).replace(/[¥￥,]/g, '').trim();
+  const n = parseFloat(s);
+  return isNaN(n) ? 0 : Math.round(n);
+}
+
+// ============ 解析原始JS文件 ============
+function parseJsFile(filepath) {
+  const content = fs.readFileSync(filepath, 'utf8');
+  // 提取 = 后面的 JSON 部分
+  const match = content.match(/=\s*(\{[\s\S]*\})\s*;?\s*$/);
+  if (!match) throw new Error(`Cannot parse JS file: ${filepath}`);
+  let data;
+  eval('data = ' + match[1]);
+  return data;
+}
+
+// ============ 重建单品榜 ============
+function rebuildProductData(rawPath) {
+  const RAW = parseJsFile(rawPath);
+  const dates = RAW.dates || RAW.metadata?.dates || [];
+  const products = RAW.products || {};
+
+  console.log(`单品榜原始数据: ${Object.keys(products).length} 个产品条目, ${dates.length} 天`);
+
+  // 每天收集TOP30产品，合并同品牌同型号
+  const dailyRankings = {};  // date -> { pkey: {rank, price, sales, brand, model, img} }
+  for (const date of dates) {
+    const dayMap = {};
+    for (const [key, prod] of Object.entries(products)) {
+      const hist = prod.history || {};
+      if (!hist[date]) continue;
+      const h = hist[date];
+      const rank = h.rank;
+      if (rank == null || rank > 30) continue;
+
+      const brandCN = prod.brand || '';
+      const brandEN = normalizeBrand(brandCN);
+      const model = (prod.model || '').trim();
+      const img = prod.img || '';
+      const price = parsePrice(h.price);
+      const sales = h.sales || '';
+
+      // 产品唯一键: 品牌英文|型号（型号为空时用特殊标识）
+      const pkey = model ? `${brandEN}|${model}` : `${brandEN}|__EMPTY__`;
+
+      // 同一天同一产品出现多次，取排名最好的
+      if (pkey in dayMap) {
+        if (rank < dayMap[pkey].rank) {
+          dayMap[pkey] = { rank, price, sales, brand: brandEN, model, img };
+        }
+      } else {
+        dayMap[pkey] = { rank, price, sales, brand: brandEN, model, img };
+      }
+    }
+    dailyRankings[date] = dayMap;
+  }
+
+  // 合并所有产品
+  const allProducts = {};  // pkey -> {brand, model, img, dailyData: {date: {rank, price, sales}}}
+  for (const [date, dayMap] of Object.entries(dailyRankings)) {
+    for (const [pkey, info] of Object.entries(dayMap)) {
+      if (!allProducts[pkey]) {
+        allProducts[pkey] = {
+          brand: info.brand,
+          model: info.model,
+          img: info.img,
+          dailyData: {}
+        };
+      }
+      allProducts[pkey].dailyData[date] = {
+        rank: info.rank,
+        price: info.price,
+        sales: info.sales
+      };
+    }
+  }
+
+  // 构建输出
+  const productsOutput = [];
+  for (const [pkey, pdata] of Object.entries(allProducts)) {
+    // 构建trend数组
+    const trend = dates.map(d => {
+      const dd = pdata.dailyData[d];
+      return dd ? dd.rank : null;
+    });
+
+    // 计算最新排名（最后一个有排名的日期）
+    let rankToday = null, rankYesterday = null, latestIdx = null;
+    for (let i = dates.length - 1; i >= 0; i--) {
+      if (trend[i] !== null) {
+        if (latestIdx === null) {
+          latestIdx = i;
+          rankToday = trend[i];
+        } else {
+          rankYesterday = trend[i];
+          break;
+        }
+      }
+    }
+
+    if (rankToday === null) continue;  // 从未上榜，跳过
+
+    // 排名变化
+    const rankChange = (rankToday != null && rankYesterday != null) ? rankYesterday - rankToday : null;
+
+    // 最佳/平均排名
+    const validRanks = trend.filter(v => v !== null);
+    const bestRank = validRanks.length > 0 ? Math.min(...validRanks) : null;
+    const avgRank = validRanks.length > 0
+      ? Math.round(validRanks.reduce((a, b) => a + b, 0) / validRanks.length * 10) / 10
+      : null;
+
+    // 最新非零价格
+    let price = 0;
+    for (let i = dates.length - 1; i >= 0; i--) {
+      const dd = pdata.dailyData[dates[i]];
+      if (dd && dd.price > 0) { price = dd.price; break; }
+    }
+
+    productsOutput.push({
+      brand: pdata.brand,
+      model: pdata.model,
+      image_url: pdata.img,
+      price,
+      est_daily: null,
+      rank_today: rankToday,
+      rank_yesterday: rankYesterday,
+      rank_change: rankChange,
+      best_rank: bestRank,
+      avg_rank: avgRank,
+      trend,
+      sales_7d: '',
+      sales_30d: '',
+      trend_text: '',
+    });
+  }
+
+  // 按最新排名排序
+  productsOutput.sort((a, b) => (a.rank_today ?? 999) - (b.rank_today ?? 999));
+
+  const brandSet = new Set(productsOutput.map(p => p.brand));
+
+  return {
+    dates,
+    latestDate: dates[dates.length - 1],
+    totalDays: dates.length,
+    products: productsOutput,
+    stats: {
+      total_products: productsOutput.length,
+      brand_count: brandSet.size,
+      latest_date: dates[dates.length - 1]
+    }
+  };
+}
+
+// ============ 重建品牌榜 ============
+function rebuildBrandData(rawPath) {
+  const RAW = parseJsFile(rawPath);
+  const dates = RAW.dates || RAW.metadata?.dates || [];
+  const brands = RAW.brands || {};
+
+  console.log(`品牌榜原始数据: ${Object.keys(brands).length} 个品牌条目, ${dates.length} 天`);
+
+  // 每天收集品牌排名，合并同品牌不同条目
+  const dailyRankings = {};  // date -> { brandEN: {rank, desc, followers, trend, brandCN} }
+  for (const date of dates) {
+    const dayMap = {};
+    for (const [key, bdata] of Object.entries(brands)) {
+      const hist = bdata.history || {};
+      if (!hist[date]) continue;
+      const h = hist[date];
+      const rank = h.rank;
+      if (rank == null) continue;
+
+      const brandCN = bdata.brand_cn || key;
+      const brandEN = normalizeBrand(key);
+      const brandCNDisplay = BRAND_CN[brandEN] || brandCN;
+
+      // 同一品牌合并，取排名最好的
+      if (brandEN in dayMap) {
+        if (rank < dayMap[brandEN].rank) {
+          dayMap[brandEN] = {
+            rank,
+            desc: h.desc || '',
+            followers: h.followers || '',
+            trend: h.trend || '',
+            brandCN: brandCNDisplay,
+          };
+        }
+      } else {
+        dayMap[brandEN] = {
+          rank,
+          desc: h.desc || '',
+          followers: h.followers || '',
+          trend: h.trend || '',
+          brandCN: brandCNDisplay,
+        };
+      }
+    }
+    dailyRankings[date] = dayMap;
+  }
+
+  // 合并所有品牌
+  const allBrands = {};  // brandEN -> {brandCN, dailyData: {date: {rank, desc, followers, trend}}}
+  for (const [date, dayMap] of Object.entries(dailyRankings)) {
+    for (const [brandEN, info] of Object.entries(dayMap)) {
+      if (!allBrands[brandEN]) {
+        allBrands[brandEN] = {
+          brandCN: info.brandCN,
+          dailyData: {}
+        };
+      }
+      allBrands[brandEN].dailyData[date] = {
+        rank: info.rank,
+        desc: info.desc,
+        followers: info.followers,
+        trend: info.trend,
+      };
+    }
+  }
+
+  // 构建输出
+  const brandsOutput = [];
+  for (const [brandEN, bdata] of Object.entries(allBrands)) {
+    const trend = dates.map(d => {
+      const dd = bdata.dailyData[d];
+      return dd ? dd.rank : null;
+    });
+
+    // 最新排名
+    let rankToday = null, rankYesterday = null, latestIdx = null;
+    for (let i = dates.length - 1; i >= 0; i--) {
+      if (trend[i] !== null) {
+        if (latestIdx === null) {
+          latestIdx = i;
+          rankToday = trend[i];
+        } else {
+          rankYesterday = trend[i];
+          break;
+        }
+      }
+    }
+
+    if (rankToday === null) continue;
+
+    const rankChange = (rankToday != null && rankYesterday != null) ? rankYesterday - rankToday : null;
+
+    const validRanks = trend.filter(v => v !== null);
+    const bestRank = validRanks.length > 0 ? Math.min(...validRanks) : null;
+    const avgRank = validRanks.length > 0
+      ? Math.round(validRanks.reduce((a, b) => a + b, 0) / validRanks.length * 10) / 10
+      : null;
+
+    // 最新日期的followers和trend_text
+    const latestDate = latestIdx !== null ? dates[latestIdx] : null;
+    const latestInfo = latestDate ? bdata.dailyData[latestDate] : {};
+    const followers = latestInfo.followers || '';
+    let trendText = latestInfo.trend || '';
+    if (!trendText && latestInfo.desc) trendText = latestInfo.desc;
+
+    brandsOutput.push({
+      brand: brandEN,
+      brand_cn: bdata.brandCN,
+      rank_today: rankToday,
+      rank_yesterday: rankYesterday,
+      rank_change: rankChange,
+      best_rank: bestRank,
+      avg_rank: avgRank,
+      trend,
+      followers,
+      trend_text: trendText,
+      prices: '',
+    });
+  }
+
+  brandsOutput.sort((a, b) => (a.rank_today ?? 999) - (b.rank_today ?? 999));
+
+  return {
+    dates,
+    latestDate: dates[dates.length - 1],
+    totalDays: dates.length,
+    brands: brandsOutput,
+    stats: {
+      total_brands: brandsOutput.length,
+      latest_date: dates[dates.length - 1]
+    }
+  };
+}
+
+// ============ 主程序 ============
+const rawProductPath = '/tmp/ranking_15day_data.js';
+const rawBrandPath = '/tmp/brand_ranking_15day_data.js';
+
+// 重建单品榜
+const productData = rebuildProductData(rawProductPath);
+const productJs = 'const RANKING_15DAY = ' + JSON.stringify(productData, null, 2) + ';\n';
+fs.writeFileSync('/tmp/clean_ranking_15day_data.js', productJs);
+
+console.log(`\n单品榜输出: ${productData.products.length} 个产品, ${productData.stats.brand_count} 个品牌`);
+
+// 每天在榜数
+productData.dates.forEach((date, i) => {
+  const count = productData.products.filter(p => p.trend[i] !== null).length;
+  console.log(`  ${date}: ${count} 个产品在榜`);
 });
-console.log(`\n底部 3 个:`);
-ranked.slice(-3).forEach(p => {
-  console.log(`  #${p.rank_today} ${p.brand} ${p.model} ¥${p.price} (排名变化:${p.rank_change})`);
+
+// 重建品牌榜
+const brandData = rebuildBrandData(rawBrandPath);
+const brandJs = 'const BRAND_RANKING_15DAY = ' + JSON.stringify(brandData, null, 2) + ';\n';
+fs.writeFileSync('/tmp/clean_brand_ranking_15day_data.js', brandJs);
+
+console.log(`\n品牌榜输出: ${brandData.brands.length} 个品牌`);
+
+// 每天在榜数
+brandData.dates.forEach((date, i) => {
+  const count = brandData.brands.filter(b => b.trend[i] !== null).length;
+  console.log(`  ${date}: ${count} 个品牌在榜`);
 });
+
+console.log('\n=== 数据重建完成 ===');
