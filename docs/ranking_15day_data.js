@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 // 排行榜数据 — 自动生成于 2026-06-07 20:30
+=======
+// 排行榜数据 — 自动生成于 2026-06-07 20:33
+>>>>>>> efb0888 (viz: 更新可视化页面 2026-06-07 20:33)
 // 请勿手动修改，运行 python3 scripts/data_to_html.py 更新
 
 const RANKING_15DAY = {
@@ -490,16 +494,20 @@ const RANKING_15DAY = {
       "rank_yesterday": 7,
       "rank_change": -1,
       "best_rank": 6,
+<<<<<<< HEAD
       "avg_rank": 13.9,
+=======
+      "avg_rank": 8.1,
+>>>>>>> efb0888 (viz: 更新可视化页面 2026-06-07 20:33)
       "trend": [
-        null,
-        null,
+        6,
+        6,
         7,
         24,
         6,
         7,
         7,
-        null,
+        7,
         6,
         6,
         9,
@@ -1002,22 +1010,26 @@ const RANKING_15DAY = {
       "rank_yesterday": 11,
       "rank_change": 5,
       "best_rank": 11,
+<<<<<<< HEAD
       "avg_rank": 30.7,
+=======
+      "avg_rank": 13,
+>>>>>>> efb0888 (viz: 更新可视化页面 2026-06-07 20:33)
       "trend": [
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
+        12,
+        13,
+        13,
+        12,
+        12,
         14,
-        null,
-        null,
+        13,
         11,
-        null,
-        null,
-        null,
-        null,
+        11,
+        11,
+        13,
+        13,
+        16,
+        15,
         16
       ],
       "sales_7d": "",
@@ -1290,18 +1302,22 @@ const RANKING_15DAY = {
       "rank_yesterday": 22,
       "rank_change": -2,
       "best_rank": 20,
+<<<<<<< HEAD
       "avg_rank": 28.0,
+=======
+      "avg_rank": 24.1,
+>>>>>>> efb0888 (viz: 更新可视化页面 2026-06-07 20:33)
       "trend": [
-        null,
-        null,
-        null,
-        null,
-        null,
+        23,
+        24,
         26,
-        29,
         26,
-        28,
-        28,
+        24,
+        26,
+        25,
+        26,
+        27,
+        27,
         21,
         23,
         22,
@@ -2049,6 +2065,7 @@ const RANKING_15DAY = {
       "trend_text": ""
     },
     {
+<<<<<<< HEAD
       "brand": "ErFeide",
       "model": "研磨一体全自动",
       "image_url": "https://img.alicdn.com/bao/upload/O1CN01scQmVk1f4z60DN5bo_!!6000000003954-0-yinhe.jpg",
@@ -2209,14 +2226,21 @@ const RANKING_15DAY = {
       "trend_text": ""
     },
     {
+=======
+>>>>>>> efb0888 (viz: 更新可视化页面 2026-06-07 20:33)
       "brand": "Schneider",
       "model": "SWK-XCF24",
       "image_url": "https://img.alicdn.com/bao/upload/O1CN01biKOVK1iEYHPyevJM_!!6000000004381-0-yinhe.jpg",
       "price": 2823,
       "est_daily": null,
       "rank_today": 30,
+<<<<<<< HEAD
       "rank_yesterday": 30,
       "rank_change": 0,
+=======
+      "rank_yesterday": null,
+      "rank_change": null,
+>>>>>>> efb0888 (viz: 更新可视化页面 2026-06-07 20:33)
       "best_rank": 28,
       "avg_rank": 33.5,
       "trend": [
@@ -2239,6 +2263,7 @@ const RANKING_15DAY = {
       "sales_7d": "",
       "sales_30d": "",
       "trend_text": ""
+<<<<<<< HEAD
     },
     {
       "brand": "Tuni",
@@ -3012,6 +3037,13 @@ const RANKING_15DAY = {
   "stats": {
     "total_products": 92,
     "brand_count": 23,
+=======
+    }
+  ],
+  "stats": {
+    "total_products": 28,
+    "brand_count": 16,
+>>>>>>> efb0888 (viz: 更新可视化页面 2026-06-07 20:33)
     "latest_date": "2026-06-07"
   }
 };
@@ -3020,7 +3052,11 @@ const RANKING_15DAY = {
 const RANK_DATA = {
     summary: {
   "latest_date": "2026-06-07",
+<<<<<<< HEAD
   "total_records": 1380,
+=======
+  "total_records": 420,
+>>>>>>> efb0888 (viz: 更新可视化页面 2026-06-07 20:33)
   "brand_count": 5,
   "top5": [
     {
@@ -3173,7 +3209,11 @@ const RANK_DATA = {
       "rank_yesterday": null,
       "rank_change": 0,
       "best_rank": 3,
+<<<<<<< HEAD
       "avg_rank": 32.9,
+=======
+      "avg_rank": 6.7,
+>>>>>>> efb0888 (viz: 更新可视化页面 2026-06-07 20:33)
       "trend": [
         null,
         null,

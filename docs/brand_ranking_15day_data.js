@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 // 品牌榜数据 — 自动生成于 2026-06-07 20:30
+=======
+// 品牌榜数据 — 自动生成于 2026-06-07 20:33
+>>>>>>> efb0888 (viz: 更新可视化页面 2026-06-07 20:33)
 // 请勿手动修改，运行 python3 scripts/data_to_html.py 更新
 
 const BRAND_RANKING_15DAY = {
@@ -39,9 +43,15 @@ const BRAND_RANKING_15DAY = {
         1,
         1
       ],
+<<<<<<< HEAD
       "followers": "1万+人",
       "trend_text": "热卖商品1万+件，1万+人购买",
       "prices": "2990,4190,2940"
+=======
+      "followers": "7000+人",
+      "trend_text": "热卖商品8000+件，7000+人购买",
+      "prices": ""
+>>>>>>> efb0888 (viz: 更新可视化页面 2026-06-07 20:33)
     },
     {
       "brand": "GEMILAI",
@@ -66,7 +76,11 @@ const BRAND_RANKING_15DAY = {
       ],
       "followers": "2000+人",
       "trend_text": "热卖商品3000+件，2000+人购买",
+<<<<<<< HEAD
       "prices": "4599,6599,8599"
+=======
+      "prices": ""
+>>>>>>> efb0888 (viz: 更新可视化页面 2026-06-07 20:33)
     },
     {
       "brand": "Philips",
@@ -89,7 +103,11 @@ const BRAND_RANKING_15DAY = {
         3,
         3
       ],
+<<<<<<< HEAD
       "followers": "",
+=======
+      "followers": "1000+人",
+>>>>>>> efb0888 (viz: 更新可视化页面 2026-06-07 20:33)
       "trend_text": "热卖商品2000+件，1000+人购买",
       "prices": ""
     },
@@ -264,7 +282,11 @@ const BRAND_RANKING_15DAY = {
         9,
         9
       ],
+<<<<<<< HEAD
       "followers": "",
+=======
+      "followers": "1000+人",
+>>>>>>> efb0888 (viz: 更新可视化页面 2026-06-07 20:33)
       "trend_text": "30天内收获1000+人好评",
       "prices": ""
     },
@@ -441,6 +463,34 @@ const BRAND_RANKING_15DAY = {
       ],
       "followers": "50万+人正在关注",
       "trend_text": "50万+人正在关注，2000+人加购",
+<<<<<<< HEAD
+=======
+      "prices": ""
+    },
+    {
+      "brand": "wigomat",
+      "brand_cn": "wigomat",
+      "rank_today": 17,
+      "rank_yesterday": 17,
+      "rank_change": 0,
+      "best_rank": 16,
+      "avg_rank": 17,
+      "trend": [
+        16,
+        16,
+        17,
+        18,
+        19,
+        17,
+        16,
+        17,
+        17,
+        17,
+        17
+      ],
+      "followers": "",
+      "trend_text": "飙升20%",
+>>>>>>> efb0888 (viz: 更新可视化页面 2026-06-07 20:33)
       "prices": ""
     },
     {
@@ -491,6 +541,7 @@ const BRAND_RANKING_15DAY = {
       ],
       "followers": "30万+人正在关注",
       "trend_text": "30万+人正在关注，1000+人加购",
+<<<<<<< HEAD
       "prices": ""
     },
     {
@@ -516,6 +567,8 @@ const BRAND_RANKING_15DAY = {
       ],
       "followers": "",
       "trend_text": "",
+=======
+>>>>>>> efb0888 (viz: 更新可视化页面 2026-06-07 20:33)
       "prices": ""
     },
     {
@@ -541,6 +594,7 @@ const BRAND_RANKING_15DAY = {
       ],
       "followers": "10万+人正在关注",
       "trend_text": "10万+人正在关注，900+人加购",
+<<<<<<< HEAD
       "prices": ""
     },
     {
@@ -666,11 +720,17 @@ const BRAND_RANKING_15DAY = {
       ],
       "followers": "",
       "trend_text": "",
+=======
+>>>>>>> efb0888 (viz: 更新可视化页面 2026-06-07 20:33)
       "prices": ""
     }
   ],
   "stats": {
+<<<<<<< HEAD
     "total_brands": 26,
+=======
+    "total_brands": 20,
+>>>>>>> efb0888 (viz: 更新可视化页面 2026-06-07 20:33)
     "latest_date": "2026-06-07"
   }
 };
