@@ -1,6 +1,3 @@
-// 品牌榜数据 — 自动生成于 2026-06-07 20:34
-// 请勿手动修改，运行 python3 scripts/data_to_html.py 更新
-
 const BRAND_RANKING_15DAY = {
   "dates": [
     "2026-05-28",
@@ -20,12 +17,12 @@ const BRAND_RANKING_15DAY = {
   "brands": [
     {
       "brand": "Delonghi",
-      "brand_cn": "Delonghi",
+      "brand_cn": "德龙",
       "rank_today": 1,
       "rank_yesterday": 1,
       "rank_change": 0,
       "best_rank": 1,
-      "avg_rank": 1.0,
+      "avg_rank": 1,
       "trend": [
         1,
         1,
@@ -39,18 +36,18 @@ const BRAND_RANKING_15DAY = {
         1,
         1
       ],
-      "followers": "1万+人",
-      "trend_text": "热卖商品1万+件，1万+人购买",
-      "prices": "2990,4190,2940"
+      "followers": "7000+人",
+      "trend_text": "热卖商品8000+件，7000+人购买",
+      "prices": ""
     },
     {
       "brand": "GEMILAI",
-      "brand_cn": "GEMILAI",
+      "brand_cn": "格米莱",
       "rank_today": 2,
       "rank_yesterday": 2,
       "rank_change": 0,
       "best_rank": 2,
-      "avg_rank": 2.0,
+      "avg_rank": 2,
       "trend": [
         2,
         2,
@@ -66,7 +63,7 @@ const BRAND_RANKING_15DAY = {
       ],
       "followers": "2000+人",
       "trend_text": "热卖商品3000+件，2000+人购买",
-      "prices": "4599,6599,8599"
+      "prices": ""
     },
     {
       "brand": "Philips",
@@ -75,7 +72,7 @@ const BRAND_RANKING_15DAY = {
       "rank_yesterday": 3,
       "rank_change": 0,
       "best_rank": 3,
-      "avg_rank": 3.0,
+      "avg_rank": 3,
       "trend": [
         3,
         3,
@@ -92,31 +89,6 @@ const BRAND_RANKING_15DAY = {
       "followers": "1000+人",
       "trend_text": "热卖商品2000+件，1000+人购买",
       "prices": ""
-    },
-    {
-      "brand": "wigomat",
-      "brand_cn": "wigomat",
-      "rank_today": 3,
-      "rank_yesterday": 17,
-      "rank_change": -14,
-      "best_rank": 3,
-      "avg_rank": 15.7,
-      "trend": [
-        16,
-        16,
-        17,
-        18,
-        19,
-        17,
-        16,
-        17,
-        17,
-        17,
-        3
-      ],
-      "followers": "40万+人",
-      "trend_text": "40万+人正在关注，1000+人加购",
-      "prices": "7549,13349,15649"
     },
     {
       "brand": "NESPRESSO",
@@ -225,7 +197,7 @@ const BRAND_RANKING_15DAY = {
       "rank_yesterday": 8,
       "rank_change": 0,
       "best_rank": 8,
-      "avg_rank": 8.0,
+      "avg_rank": 8,
       "trend": [
         8,
         8,
@@ -441,6 +413,31 @@ const BRAND_RANKING_15DAY = {
       ],
       "followers": "50万+人正在关注",
       "trend_text": "50万+人正在关注，2000+人加购",
+      "prices": ""
+    },
+    {
+      "brand": "wigomat",
+      "brand_cn": "wigomat",
+      "rank_today": 17,
+      "rank_yesterday": 17,
+      "rank_change": 0,
+      "best_rank": 16,
+      "avg_rank": 17,
+      "trend": [
+        16,
+        16,
+        17,
+        18,
+        19,
+        17,
+        16,
+        17,
+        17,
+        17,
+        17
+      ],
+      "followers": "",
+      "trend_text": "飙升20%",
       "prices": ""
     },
     {
