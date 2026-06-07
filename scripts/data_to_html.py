@@ -261,11 +261,133 @@ def build_15day_data(data: dict) -> dict:
     }
 
 
-def generate_js_file(data):
-    """生成 ranking_15day_data.js"""
-    result_15day = build_15day_data(data)
+def build_brand_15day_data(data: dict) -> dict:
+    """
+    构建品牌榜15天动态数据，供 brand_ranking_15day.html 使用
 
-    # 同时保留旧格式（兼容）
+    数据结构：
+    {
+        dates: ["2026-06-01", ...],
+        latestDate: "2026-06-07",
+        totalDays: 6,
+        brands: [
+            {
+                brand: "Delonghi",
+                rank_today: 1,
+                rank_yesterday: 2,
+                rank_change: -1,
+                best_rank: 1,
+                avg_rank: 2.3,
+                trend: [null, null, null, null, null, 1],
+                followers: "1万+人",
+                trend_text: "热卖商品1万+件，1万+人购买",
+                prices: "2990,4190,2940"
+            },
+            ...
+        ],
+        stats: { total_brands: 3, latest_date: "2026-06-07" }
+    }
+    """
+    all_dates = sorted(data["brand"].keys())
+    recent_15 = all_dates[-15:] if len(all_dates) > 15 else all_dates
+    latest_date = all_dates[-1] if all_dates else ""
+
+    # 构建品牌历史排名
+    brand_history = {}
+    for date_str in recent_15:
+        if date_str not in data["brand"]:
+            continue
+        for r in data["brand"][date_str]:
+            brand_en = r.get("brand_en", "")
+            if not brand_en:
+                continue
+            key = brand_en
+            if key not in brand_history:
+                brand_history[key] = {
+                    "brand": brand_en,
+                    "brand_cn": r.get("brand_cn", ""),
+                    "dates": {},
+                    "latest_record": None,
+                    "latest_date": "",
+                }
+            brand_history[key]["dates"][date_str] = r.get("rank", 0)
+            if date_str >= brand_history[key]["latest_date"]:
+                brand_history[key]["latest_date"] = date_str
+                brand_history[key]["latest_record"] = r
+
+    # 构建品牌列表
+    brands = []
+    for key, info in brand_history.items():
+        rec = info["latest_record"]
+        if not rec:
+            continue
+
+        # 15天趋势
+        trend = [info["dates"].get(d, None) for d in recent_15]
+
+        rank_today = rec.get("rank", 0)
+        yesterday = recent_15[-2] if len(recent_15) >= 2 else ""
+        rank_yesterday = info["dates"].get(yesterday, None)
+
+        rank_change = 0
+        if rank_yesterday is not None and rank_today > 0:
+            rank_change = rank_today - rank_yesterday
+
+        valid_ranks = [r for r in info["dates"].values() if r > 0]
+        best_rank = min(valid_ranks) if valid_ranks else 0
+
+        rank_sum = 0
+        for d in recent_15:
+            r = info["dates"].get(d, None)
+            rank_sum += r if (r is not None and r > 0) else 25
+        avg_rank = round(rank_sum / len(recent_15), 1)
+
+        # 趋势文字和关注人数解析
+        trend_text = rec.get("description", "")
+        followers = rec.get("followers", "")
+        if not followers and trend_text:
+            # 从描述中提取关注人数信息
+            import re
+            m = re.search(r'([\d万+]+人)', trend_text)
+            if m:
+                followers = m.group(1)
+
+        brands.append({
+            "brand": rec.get("brand_en", ""),
+            "brand_cn": rec.get("brand_cn", ""),
+            "rank_today": rank_today,
+            "rank_yesterday": rank_yesterday,
+            "rank_change": rank_change,
+            "best_rank": best_rank,
+            "avg_rank": avg_rank,
+            "trend": trend,
+            "followers": followers,
+            "trend_text": trend_text,
+            "prices": rec.get("prices", ""),
+        })
+
+    brands.sort(key=lambda x: x["rank_today"] if x["rank_today"] > 0 else 99)
+
+    stats = {
+        "total_brands": len(brands),
+        "latest_date": latest_date,
+    }
+
+    return {
+        "dates": recent_15,
+        "latestDate": latest_date,
+        "totalDays": len(all_dates),
+        "brands": brands,
+        "stats": stats,
+    }
+
+
+def generate_js_file(data):
+    """生成 ranking_15day_data.js + brand_ranking_15day_data.js"""
+    result_15day = build_15day_data(data)
+    brand_15day = build_brand_15day_data(data)
+
+    # 单页JS数据
     all_dates = set()
     for source in ["pc", "mobile", "brand"]:
         all_dates.update(data[source].keys())
@@ -296,11 +418,24 @@ const RANK_DATA = {{
 }};
 """
 
+    brand_js_content = f"""// 品牌榜数据 — 自动生成于 {datetime.now().strftime('%Y-%m-%d %H:%M')}
+// 请勿手动修改，运行 python3 scripts/data_to_html.py 更新
+
+const BRAND_RANKING_15DAY = {json.dumps(brand_15day, ensure_ascii=False, indent=2)};
+"""
+
     os.makedirs(DOCS_DIR, exist_ok=True)
+    
     js_path = f"{DOCS_DIR}/ranking_15day_data.js"
     with open(js_path, "w", encoding="utf-8") as f:
         f.write(js_content.strip())
     print(f"✅ JS 数据: {js_path} ({os.path.getsize(js_path)} bytes)")
+
+    brand_js_path = f"{DOCS_DIR}/brand_ranking_15day_data.js"
+    with open(brand_js_path, "w", encoding="utf-8") as f:
+        f.write(brand_js_content.strip())
+    print(f"✅ 品牌JS数据: {brand_js_path} ({os.path.getsize(brand_js_path)} bytes)")
+
     return js_path
 
 
@@ -779,7 +914,9 @@ def main():
     print(f"\n✅ 生成完成！")
     print(f"   📄 {js_path}")
     print(f"   📄 {html_path}")
-    print(f"\n🌐 在浏览器中打开 docs/index.html 即可查看")
+    print(f"\n🌐 页面:")
+    print(f"   📄 单品排名: https://poonee.github.io/tmall-rank-data/")
+    print(f"   📄 品牌排行: https://poonee.github.io/tmall-rank-data/brand_ranking_15day.html")
     print(f"   或在项目目录下运行: python3 -m http.server 8080")
 
     # Git commit after generation
