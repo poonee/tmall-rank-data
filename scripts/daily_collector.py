@@ -345,6 +345,8 @@ def main():
                         help="实时采集（需 agent-browser）")
     parser.add_argument("--git", action="store_true",
                         help="采集后自动 git commit")
+    parser.add_argument("--viz", action="store_true",
+                        help="采集后更新可视化页面")
     args = parser.parse_args()
 
     # 模式判定
@@ -381,6 +383,13 @@ def main():
     # ── Git 自动 commit ──
     if args.git:
         git_commit(writer.today)
+
+    # ── 更新可视化页面 ──
+    if args.viz:
+        print("\n📊 更新可视化页面...")
+        import subprocess
+        subprocess.run(["python3", "scripts/data_to_html.py"],
+                       cwd="/workspace/rank_data")
 
 
 if __name__ == "__main__":
