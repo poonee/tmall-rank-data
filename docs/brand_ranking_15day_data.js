@@ -1,4 +1,4 @@
-// 品牌榜数据 — 自动生成于 2026-06-07 19:48
+// 品牌榜数据 — 自动生成于 2026-06-07 19:49
 // 请勿手动修改，运行 python3 scripts/data_to_html.py 更新
 
 const BRAND_RANKING_15DAY = {

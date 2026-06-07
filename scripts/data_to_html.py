@@ -633,7 +633,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 </div>
 <div class="footer">
 <div class="footer-title">🔗 关联文档</div>
-<a href="index.html">首页</a> |
+<a href="index.html">单品排名</a> |
+<a href="brand_ranking_15day.html">品牌排行</a> |
 <a href="https://github.com/poonee/tmall-rank-data">GitHub 数据仓库</a>
 <br><br>
 数据文件：<code style="color:#aaa;font-size:.85em">ranking_15day_data.js</code> |
