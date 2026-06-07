@@ -95,3 +95,6 @@ if [ "$PUSH" = true ]; then
         echo "   配置: bash scripts/git_after_collect.sh --remote <仓库URL>"
     fi
 fi
+
+echo ""
+echo "✅ Git 流程完成"
