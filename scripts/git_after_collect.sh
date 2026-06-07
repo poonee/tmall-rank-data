@@ -1,20 +1,20 @@
 #!/bin/bash
-"""
-git_after_collect.sh — 采集后自动提交到 Git
-
-在 daily_collector.py 执行完成后调用，自动：
-  1. git add 新增/修改的数据文件
-  2. git commit（带日期标记）
-  3. (可选) git push 到远程仓库
-
-用法:
-  bash scripts/git_after_collect.sh                          # 仅本地 commit
-  bash scripts/git_after_collect.sh --push                   # commit + push
-  bash scripts/git_after_collect.sh --message "自定义消息"    # 自定义 commit 消息
-
-配置远程仓库:
-  bash scripts/git_after_collect.sh --remote <仓库URL>       # 添加远程仓库
-"""
+#
+# git_after_collect.sh — 采集后自动提交到 Git
+#
+# 在 daily_collector.py 执行完成后调用，自动：
+#   1. git add 新增/修改的数据文件
+#   2. git commit（带日期标记）
+#   3. (可选) git push 到远程仓库
+#
+# 用法:
+#   bash scripts/git_after_collect.sh                          # 仅本地 commit
+#   bash scripts/git_after_collect.sh --push                   # commit + push
+#   bash scripts/git_after_collect.sh --message "自定义消息"    # 自定义 commit 消息
+#
+# 配置远程仓库:
+#   bash scripts/git_after_collect.sh --remote <仓库URL>       # 添加远程仓库
+#
 
 set -e
 
