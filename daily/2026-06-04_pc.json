@@ -1,0 +1,72 @@
+[
+  {
+    "date": "2026-06-04",
+    "source": "pc",
+    "rank": 1,
+    "brand": "GEMILAI",
+    "model": "双瞳",
+    "price": 4599,
+    "coupon_price": "",
+    "sales_7d": "416+件",
+    "sales_30d": "",
+    "trend": "蝉联榜首",
+    "image_url": "",
+    "raw_text": ""
+  },
+  {
+    "date": "2026-06-04",
+    "source": "pc",
+    "rank": 2,
+    "brand": "Delonghi",
+    "model": "ECAM",
+    "price": 8999,
+    "coupon_price": "",
+    "sales_7d": "382+件",
+    "sales_30d": "",
+    "trend": "排名上升",
+    "image_url": "",
+    "raw_text": ""
+  },
+  {
+    "date": "2026-06-04",
+    "source": "pc",
+    "rank": 3,
+    "brand": "Hauswirt",
+    "model": "C9Pro",
+    "price": 12999,
+    "coupon_price": "",
+    "sales_7d": "409+件",
+    "sales_30d": "",
+    "trend": "",
+    "image_url": "",
+    "raw_text": ""
+  },
+  {
+    "date": "2026-06-04",
+    "source": "pc",
+    "rank": 4,
+    "brand": "wigomat",
+    "model": "W12",
+    "price": 11349,
+    "coupon_price": "",
+    "sales_7d": "329+件",
+    "sales_30d": "",
+    "trend": "",
+    "image_url": "",
+    "raw_text": ""
+  },
+  {
+    "date": "2026-06-04",
+    "source": "pc",
+    "rank": 5,
+    "brand": "Barsetto",
+    "model": "百胜图",
+    "price": 6999,
+    "coupon_price": "",
+    "sales_7d": "264+件",
+    "sales_30d": "",
+    "trend": "",
+    "image_url": "",
+    "raw_text": ""
+  }
+]
