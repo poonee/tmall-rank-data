@@ -78,7 +78,7 @@ def main():
         return
 
     if args.latest:
-        path = f"{DATA_DIR}/output/latest_{args.latest}.csv"
+        path = f"{DATA_DIR}/docs/latest_{args.latest}.csv"
         if os.path.exists(path):
             print(f"\n📄 最新 {args.latest.upper()} 数据 ({path}):\n")
             print_csv_preview(path, args.rows)

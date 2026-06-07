@@ -2,7 +2,7 @@
 #
 # netdrive_sync.sh — 排行榜数据同步到 netdrive 云盘
 #
-# 将 output/ 目录的文件同步到 netdrive 云盘共享目录。
+# 将 docs/ 目录的文件同步到 netdrive 云盘共享目录。
 #
 # 用法:
 #   bash scripts/netdrive_sync.sh              # 同步全部
@@ -50,11 +50,11 @@ sync_files() {
     
     # 需要同步的文件列表
     FILES=(
-        "output/latest_pc.csv"
-        "output/latest_mobile.csv"
-        "output/latest_brand.csv"
-        "output/index.html"
-        "output/ranking_data.js"
+        "docs/latest_pc.csv"
+        "docs/latest_mobile.csv"
+        "docs/latest_brand.csv"
+        "docs/index.html"
+        "docs/ranking_data.js"
     )
     
     for f in "${FILES[@]}"; do

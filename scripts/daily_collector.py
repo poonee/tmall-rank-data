@@ -16,7 +16,7 @@ daily_collector.py — 每日排行榜采集 & 双写主脚本
 输出:
   /workspace/rank_data/daily/YYYY-MM-DD_{source}.csv
   /workspace/rank_data/daily/YYYY-MM-DD_{source}.json
-  /workspace/rank_data/output/latest_{source}.csv
+  /workspace/rank_data/docs/latest_{source}.csv
 """
 
 import sys
@@ -371,7 +371,7 @@ def main():
     print(f"\n{'='*50}")
     print("✅ 完成！数据已保存至 /workspace/rank_data/")
     print("   daily/  → 按日期归档（CSV + JSON）")
-    print("   output/ → latest 最新数据")
+    print("   docs/ → latest 最新数据")
 
     from pathlib import Path
     files = sorted(Path(writer.daily_dir).glob(f"{writer.today}_*"))

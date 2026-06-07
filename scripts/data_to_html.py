@@ -3,16 +3,16 @@
 data_to_html.py — 排行榜数据 → 可视化 HTML 页面
 
 读取 daily/ 目录下的所有CSV数据，生成：
-  1. output/ranking_data.js   — JS数据文件（供HTML页面加载）
-  2. output/index.html        — 可视化趋势页面（独立HTML）
+  1. docs/ranking_data.js   — JS数据文件（供HTML页面加载）
+  2. docs/index.html        — 可视化趋势页面（独立HTML）
 
 用法:
   python3 scripts/data_to_html.py              # 生成最新页面
   python3 scripts/data_to_html.py --open       # 生成后启动本地服务器
 
 输出:
-  /workspace/rank_data/output/ranking_data.js
-  /workspace/rank_data/output/index.html
+  /workspace/rank_data/docs/ranking_data.js
+  /workspace/rank_data/docs/index.html
 """
 
 import os, sys, json, glob
@@ -472,7 +472,7 @@ def main():
     print(f"\n✅ 生成完成！")
     print(f"   📄 {js_path}")
     print(f"   📄 {html_path}")
-    print(f"\n🌐 在浏览器中打开 output/index.html 即可查看")
+    print(f"\n🌐 在浏览器中打开 docs/index.html 即可查看")
     print(f"   或在项目目录下运行: python3 -m http.server 8080")
     
     # Git commit after generation

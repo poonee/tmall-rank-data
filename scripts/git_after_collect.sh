@@ -69,7 +69,7 @@ else
     [ "$MODIFIED" -gt 0 ] && COMMIT_MSG="$COMMIT_MSG (~${MODIFIED}修改)"
 
     # 提取 TOP 变化
-    CHANGES=$(git diff --stat -- "daily/*.csv" "output/*.csv" 2>/dev/null | tail -3)
+    CHANGES=$(git diff --stat -- "daily/*.csv" "docs/*.csv" 2>/dev/null | tail -3)
 fi
 
 # 添加文件并提交
