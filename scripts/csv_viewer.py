@@ -12,15 +12,17 @@ csv_viewer.py — 排行榜 CSV 快速查看工具
 import sys, os, csv, json, glob
 from datetime import datetime
 
-sys.path.insert(0, "/workspace/rank_data/scripts")
-from data_standards import print_csv_preview
+_SCRIPTS_DIR = os.path.dirname(os.path.abspath(__file__))
+if _SCRIPTS_DIR not in sys.path:
+    sys.path.insert(0, _SCRIPTS_DIR)
+from data_standards import print_csv_preview, repo_root
 
-DATA_DIR = "/workspace/rank_data"
+DATA_DIR = repo_root()
 
 
 def list_daily_files():
     """列出所有 daily 文件"""
-    files = sorted(glob.glob(f"{DATA_DIR}/daily/*.csv"))
+    files = sorted(glob.glob(os.path.join(DATA_DIR, "daily", "*.csv")))
     if not files:
         print("📭 daily/ 目录下暂无 CSV 文件")
         return
@@ -38,7 +40,7 @@ def list_daily_files():
 
 def show_summary():
     """显示汇总统计"""
-    files = sorted(glob.glob(f"{DATA_DIR}/daily/*.csv"))
+    files = sorted(glob.glob(os.path.join(DATA_DIR, "daily", "*.csv")))
     if not files:
         print("📭 暂无数据")
         return
@@ -66,7 +68,7 @@ def show_summary():
 def main():
     import argparse
     parser = argparse.ArgumentParser(description="排行榜CSV查看工具")
-    parser.add_argument("--file", help="指定CSV文件路径（相对 daily/ 或绝对路径）")
+    parser.add_argument("--file", help="CSV 路径（相对仓库根目录，或绝对路径）")
     parser.add_argument("--latest", choices=["pc", "mobile", "brand"],
                         help="查看最新数据")
     parser.add_argument("--summary", action="store_true", help="汇总统计")
@@ -78,7 +80,7 @@ def main():
         return
 
     if args.latest:
-        path = f"{DATA_DIR}/docs/latest_{args.latest}.csv"
+        path = os.path.join(DATA_DIR, "docs", f"latest_{args.latest}.csv")
         if os.path.exists(path):
             print(f"\n📄 最新 {args.latest.upper()} 数据 ({path}):\n")
             print_csv_preview(path, args.rows)
@@ -87,7 +89,7 @@ def main():
         return
 
     if args.file:
-        path = args.file if args.file.startswith("/") else f"{DATA_DIR}/{args.file}"
+        path = args.file if os.path.isabs(args.file) else os.path.join(DATA_DIR, args.file)
         if os.path.exists(path):
             print(f"\n📄 {path}:\n")
             print_csv_preview(path, args.rows)

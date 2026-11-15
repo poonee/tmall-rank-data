@@ -12,23 +12,24 @@ data_to_html.py — 排行榜数据 → 可视化 HTML 页面（增量模式）
 用法:
   python3 scripts/data_to_html.py              # 增量更新数据文件
   python3 scripts/data_to_html.py --full       # 完全重建（从 daily/ 重新生成，忽略基线）
-  python3 scripts/data_to_html.py --open       # 生成后启动本地服务器
 
-输出:
-  /workspace/rank_data/docs/ranking_15day_data.js
-  /workspace/rank_data/docs/brand_ranking_15day_data.js
+输出（相对仓库根目录）:
+  docs/ranking_15day_data.js
+  docs/brand_ranking_15day_data.js
 """
 
 import os, sys, json, glob, re
 from datetime import datetime, date
 from collections import defaultdict
 
-sys.path.insert(0, "/workspace/rank_data/scripts")
-from data_standards import SINGLE_RANK_FIELDS, BRAND_RANK_FIELDS
+_SCRIPTS_DIR = os.path.dirname(os.path.abspath(__file__))
+if _SCRIPTS_DIR not in sys.path:
+    sys.path.insert(0, _SCRIPTS_DIR)
+from data_standards import SINGLE_RANK_FIELDS, BRAND_RANK_FIELDS, repo_root
 
-DATA_DIR = "/workspace/rank_data"
-DAILY_DIR = f"{DATA_DIR}/daily"
-DOCS_DIR = f"{DATA_DIR}/docs"
+DATA_DIR = repo_root()
+DAILY_DIR = os.path.join(DATA_DIR, "daily")
+DOCS_DIR = os.path.join(DATA_DIR, "docs")
 
 MAX_DAYS = 15  # 保留最近15天数据
 
@@ -174,7 +175,7 @@ def load_existing_js_data() -> dict:
     }
 
     # 读取单品排名基线
-    product_js_path = f"{DOCS_DIR}/ranking_15day_data.js"
+    product_js_path = os.path.join(DOCS_DIR, "ranking_15day_data.js")
     if os.path.exists(product_js_path):
         try:
             with open(product_js_path, "r", encoding="utf-8") as f:
@@ -192,7 +193,7 @@ def load_existing_js_data() -> dict:
             print(f"⚠️  读取单品基线失败: {e}")
 
     # 读取品牌排名基线
-    brand_js_path = f"{DOCS_DIR}/brand_ranking_15day_data.js"
+    brand_js_path = os.path.join(DOCS_DIR, "brand_ranking_15day_data.js")
     if os.path.exists(brand_js_path):
         try:
             with open(brand_js_path, "r", encoding="utf-8") as f:
@@ -879,12 +880,12 @@ const BRAND_RANKING_15DAY = {json.dumps(brand_15day, ensure_ascii=False, indent=
 
     os.makedirs(DOCS_DIR, exist_ok=True)
     
-    js_path = f"{DOCS_DIR}/ranking_15day_data.js"
+    js_path = os.path.join(DOCS_DIR, "ranking_15day_data.js")
     with open(js_path, "w", encoding="utf-8") as f:
         f.write(js_content.strip())
     print(f"✅ JS 数据: {js_path} ({os.path.getsize(js_path)} bytes)")
 
-    brand_js_path = f"{DOCS_DIR}/brand_ranking_15day_data.js"
+    brand_js_path = os.path.join(DOCS_DIR, "brand_ranking_15day_data.js")
     with open(brand_js_path, "w", encoding="utf-8") as f:
         f.write(brand_js_content.strip())
     print(f"✅ 品牌JS数据: {brand_js_path} ({os.path.getsize(brand_js_path)} bytes)")
@@ -895,7 +896,7 @@ const BRAND_RANKING_15DAY = {json.dumps(brand_15day, ensure_ascii=False, indent=
 def generate_html():
     """生成可视化 HTML 页面（使用用户设计的页面）"""
 
-    html_path = f"{DOCS_DIR}/index.html"
+    html_path = os.path.join(DOCS_DIR, "index.html")
     with open(html_path, "w", encoding="utf-8") as f:
         f.write(_get_index_html())
     print(f"✅ HTML 页面: {html_path} ({os.path.getsize(html_path)} bytes)")
@@ -1371,7 +1372,7 @@ def main():
 
     print(f"\n✅ 数据文件生成完成！")
     print(f"   📄 {js_path}")
-    print(f"   📄 {DOCS_DIR}/brand_ranking_15day_data.js")
+    print(f"   📄 {os.path.join(DOCS_DIR, 'brand_ranking_15day_data.js')}")
     print(f"\n🌐 页面:")
     print(f"   📄 单品排名: https://poonee.github.io/tmall-rank-data/")
     print(f"   📄 品牌排行: https://poonee.github.io/tmall-rank-data/brand_ranking_15day.html")

@@ -11,8 +11,14 @@ data_standards.py — 排行榜数据字段定义 & 标准化工具
 import csv
 import json
 import os
+import shutil
 from datetime import date
 from typing import Optional
+
+
+def repo_root() -> str:
+    """仓库根目录：scripts/ 的上一级，按本文件位置解析，不依赖当前工作目录。"""
+    return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # ═══════════════════════════════════════════════════
 # 字段定义
@@ -122,12 +128,13 @@ def normalize_model(brand: str, raw_text: str) -> str:
 class RankDataWriter:
     """排行榜数据双写工具：同时写入 CSV + JSON"""
 
-    def __init__(self, base_dir: str = "/workspace/rank_data"):
-        self.base_dir = base_dir
-        self.daily_dir = f"{base_dir}/daily"
-        self.output_dir = f"{base_dir}/output"
+    def __init__(self, base_dir: Optional[str] = None):
+        self.base_dir = base_dir or repo_root()
+        self.daily_dir = os.path.join(self.base_dir, "daily")
+        # 最新快照与 GitHub Pages 仪表盘放在同一目录 docs/
+        self.docs_dir = os.path.join(self.base_dir, "docs")
         os.makedirs(self.daily_dir, exist_ok=True)
-        os.makedirs(self.output_dir, exist_ok=True)
+        os.makedirs(self.docs_dir, exist_ok=True)
         self.today = date.today().isoformat()
 
     def write(self, records: list[dict], source: str, fields: Optional[list] = None):
@@ -147,13 +154,13 @@ class RankDataWriter:
         prefix = f"{self.today}_{source}"
 
         # --- 写 JSON ---
-        json_path = f"{self.daily_dir}/{prefix}.json"
+        json_path = os.path.join(self.daily_dir, f"{prefix}.json")
         with open(json_path, "w", encoding="utf-8") as f:
             json.dump(records, f, ensure_ascii=False, indent=2)
         print(f"✅ JSON 写入: {json_path} ({len(records)} 条)")
 
         # --- 写 CSV (UTF-8 BOM, Excel友好) ---
-        csv_path = f"{self.daily_dir}/{prefix}.csv"
+        csv_path = os.path.join(self.daily_dir, f"{prefix}.csv")
         with open(csv_path, "w", encoding="utf-8-sig", newline="") as f:
             writer = csv.DictWriter(f, fieldnames=fields)
             writer.writeheader()
@@ -163,9 +170,9 @@ class RankDataWriter:
                 writer.writerow(filtered)
         print(f"✅ CSV 写入: {csv_path} ({len(records)} 条)")
 
-        # --- 覆盖 latest ---
-        latest_csv = f"{self.output_dir}/latest_{source}.csv"
-        os.system(f"cp {csv_path} {latest_csv}")
+        # --- 覆盖 docs/latest_{source}.csv ---
+        latest_csv = os.path.join(self.docs_dir, f"latest_{source}.csv")
+        shutil.copy2(csv_path, latest_csv)
         print(f"✅ Latest 更新: {latest_csv}")
 
         return json_path, csv_path
