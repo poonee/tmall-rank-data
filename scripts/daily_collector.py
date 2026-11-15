@@ -13,10 +13,10 @@ daily_collector.py — 每日排行榜采集 & 双写主脚本
   python3 daily_collector.py --live --source pc  # 真实采集PC端
   python3 daily_collector.py --file ./raw_pc.txt # 从文件解析
 
-输出:
-  /workspace/rank_data/daily/YYYY-MM-DD_{source}.csv
-  /workspace/rank_data/daily/YYYY-MM-DD_{source}.json
-  /workspace/rank_data/docs/latest_{source}.csv
+输出（均相对仓库根目录，根目录按本文件位置解析）:
+  daily/YYYY-MM-DD_{source}.csv
+  daily/YYYY-MM-DD_{source}.json
+  docs/latest_{source}.csv
 """
 
 import sys
@@ -27,9 +27,10 @@ import re
 import argparse
 from datetime import datetime, date
 
-# 添加上级目录到路径
-sys.path.insert(0, "/workspace/rank_data/scripts")
-from data_standards import RankDataWriter, SINGLE_RANK_FIELDS, BRAND_RANK_FIELDS
+_SCRIPTS_DIR = os.path.dirname(os.path.abspath(__file__))
+if _SCRIPTS_DIR not in sys.path:
+    sys.path.insert(0, _SCRIPTS_DIR)
+from data_standards import RankDataWriter, SINGLE_RANK_FIELDS, BRAND_RANK_FIELDS, repo_root
 
 
 # ═══════════════════════════════════════════════════
@@ -159,8 +160,7 @@ def parse_rank_text(raw_text: str, source: str) -> list[dict]:
 
 def git_commit(today: str):
     """采集后自动 git commit"""
-    import subprocess
-    repo_dir = "/workspace/rank_data"
+    repo_dir = repo_root()
 
     result = subprocess.run(
         ["git", "status", "--porcelain"],
@@ -266,8 +266,7 @@ def collect_and_write(source: str, writer: RankDataWriter,
         if not file_path:
             print("❌ --file 模式需要指定文件路径")
             return
-        path = file_path if file_path.startswith("/") else \
-            f"/workspace/rank_data/{file_path}"
+        path = file_path if os.path.isabs(file_path) else os.path.join(repo_root(), file_path)
         if not os.path.exists(path):
             print(f"❌ 文件不存在: {path}")
             return
@@ -369,9 +368,9 @@ def main():
         collect_and_write(src, writer, mode=mode, file_path=args.file)
 
     print(f"\n{'='*50}")
-    print("✅ 完成！数据已保存至 /workspace/rank_data/")
+    print(f"✅ 完成！数据已保存至 {writer.base_dir}/")
     print("   daily/  → 按日期归档（CSV + JSON）")
-    print("   docs/ → latest 最新数据")
+    print("   docs/   → latest 最新数据")
 
     from pathlib import Path
     files = sorted(Path(writer.daily_dir).glob(f"{writer.today}_*"))
@@ -387,9 +386,11 @@ def main():
     # ── 更新可视化页面 ──
     if args.viz:
         print("\n📊 更新可视化页面...")
-        import subprocess
-        subprocess.run(["python3", "scripts/data_to_html.py"],
-                       cwd="/workspace/rank_data")
+        root = repo_root()
+        subprocess.run(
+            [sys.executable, os.path.join(root, "scripts", "data_to_html.py")],
+            cwd=root,
+        )
 
 
 if __name__ == "__main__":

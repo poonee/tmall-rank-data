@@ -1,31 +1,42 @@
 # 每日排行榜数据仓库
 
+天猫商用咖啡机排行榜：Python 采集与解析、按日 CSV/JSON 归档，以及 `docs/` 下的 GitHub Pages 仪表盘。
+
+脚本按自身文件位置定位仓库根目录，克隆后在任意工作目录执行即可。
+
 ## 📂 目录结构
 
 ```
-/workspace/rank_data/
+tmall-rank-data/
 │
-├── README.md              ← 本文件：项目说明 & 数据标准
+├── README.md
 │
-├── daily/                 ← 每日原始数据（按日期归档）
-│   ├── 2026-06-07_pc.csv      PC端单品榜TOP30
-│   ├── 2026-06-07_pc.json
-│   ├── 2026-06-07_mobile.csv  手机端单品榜TOP30
-│   ├── 2026-06-07_mobile.json
-│   ├── 2026-06-07_brand.csv   品牌榜TOP20
-│   └── 2026-06-07_brand.json
+├── daily/                         每日归档（已有数据，不自动补历史）
+│   ├── 2026-06-02_pc.csv/.json … 2026-06-07_pc.csv/.json
+│   ├── 2026-06-07_mobile.csv/.json
+│   └── 2026-06-07_brand.csv/.json
 │
-├── archive/               ← 历史备份（按月打包）
+├── docs/                          GitHub Pages 仪表盘 + 最新快照
+│   ├── index.html                      单品榜页面
+│   ├── brand_ranking_15day.html        品牌榜页面
+│   ├── ranking_15day_data.js           单品 15 日数据（data_to_html.py 更新）
+│   ├── brand_ranking_15day_data.js     品牌 15 日数据
+│   ├── latest_pc.csv                   PC 端最新快照
+│   ├── latest_mobile.csv               手机端最新快照
+│   ├── latest_brand.csv                品牌榜最新快照
+│   └── knowledge_share_data_storage.md
 │
-├── scripts/               ← 采集 & 处理脚本
-│   ├── daily_collector.py      主采集脚本（调用各技能）
-│   ├── data_standards.py       数据字段定义 & 标准化
-│   ├── csv_viewer.py           快速查看CSV工具
-│   └── requirements.txt        依赖
-│
-└── output/                ← 衍生产出（可视化数据等）
-    └── latest_pc.csv           PC端最新数据（方便外部读取）
-    └── latest_mobile.csv       手机端最新数据
+└── scripts/
+    ├── daily_collector.py         采集入口（--dry-run / --file / --live）
+    ├── parsers.py                 PC、手机、品牌原始文本解析
+    ├── data_standards.py          字段标准与 CSV/JSON 双写
+    ├── data_to_html.py            把 daily/ 合并进 docs/*.js
+    ├── csv_viewer.py              查看 daily/ 与 docs/latest_*.csv
+    ├── clean_and_convert.js       一次性清洗，读写 /tmp 下的 JS（不参与每日采集）
+    ├── convert_user_data.js       一次性格式转换，同样读写 /tmp
+    ├── git_after_collect.sh       采集后的 git commit / push
+    ├── netdrive_sync.sh           把 docs/ 列到 netdrive（需单独认证）
+    └── requirements.txt           第三方依赖说明（当前仅标准库）
 ```
 
 ---
@@ -88,7 +99,7 @@ Step 2: 解析 → 结构化（按上方字段标准）
 Step 3: 双写
     ├── → daily/YYYY-MM-DD_source.csv  （CSV格式，Excel可直接打开）
     ├── → daily/YYYY-MM-DD_source.json （JSON格式，程序读取）
-    └── → output/latest_source.csv      （覆盖，始终保持最新）
+    └── → docs/latest_source.csv        （覆盖，始终保持最新）
     ↓
 Step 4: 版本管理
     └── git add && git commit -m "data: YYYY-MM-DD ranking"
@@ -98,23 +109,49 @@ Step 4: 版本管理
 
 ## 🚀 快速使用
 
+需要 Python 3.9+。采集、解析和可视化脚本只使用标准库，`scripts/requirements.txt` 没有第三方包：
+
 ```bash
-# 1. 查看最新数据
-cat output/latest_pc.csv
-
-# 2. 查看某日数据
-cat daily/2026-06-07_pc.csv
-
-# 3. 运行采集脚本（模拟）
-cd scripts && python3 daily_collector.py --dry-run
-
-# 4. 采集 + Git提交 + 更新可视化
-cd scripts && python3 daily_collector.py --source all --git --viz
-
-# 5. 启动可视化页面
-cd /workspace/rank_data && python3 -m http.server 8080
-# 浏览器打开 http://localhost:8080/output/index.html
+pip install -r scripts/requirements.txt
 ```
+
+在仓库根目录执行。数据路径由脚本文件所在位置决定，用绝对路径调用脚本时当前目录可以是别处。`--file` 等相对路径按仓库根目录解析。本地预览请在仓库根目录启动静态服务。
+
+```bash
+# 1. 查看最新快照与某一天的归档
+python3 scripts/csv_viewer.py --latest pc
+python3 scripts/csv_viewer.py --file daily/2026-06-07_pc.csv
+python3 scripts/csv_viewer.py --summary
+
+# 2. 模拟采集（示例文本，不访问网络；会写入当天的 daily/ 和 docs/latest_*.csv）
+python3 scripts/daily_collector.py --dry-run
+
+# 3. 从本地原始文本解析。路径相对仓库根目录，也可以传绝对路径
+python3 scripts/daily_collector.py --file raw_pc.txt --source pc
+
+# 4. 真实采集（需要本机已安装 agent-browser，并具备页面里用到的浏览器环境）
+python3 scripts/daily_collector.py --live --source pc
+
+# 5. 采集后提交 Git，并刷新 docs/ 下的 15 日数据文件
+python3 scripts/daily_collector.py --source all --git --viz
+
+# 6. 只根据 daily/ 增量更新可视化数据（不改 HTML 页面）
+python3 scripts/data_to_html.py
+# 忽略 docs/ 里已有基线、仅从 daily/ 重建：
+python3 scripts/data_to_html.py --full
+
+# 7. 本地预览仪表盘（在仓库根目录启动静态服务）
+python3 -m http.server 8080
+# 单品榜 http://localhost:8080/docs/index.html
+# 品牌榜 http://localhost:8080/docs/brand_ranking_15day.html
+```
+
+已发布页面：
+
+- https://poonee.github.io/tmall-rank-data/
+- https://poonee.github.io/tmall-rank-data/brand_ranking_15day.html
+
+`data_to_html.py` 在发现工作区有改动时会自己执行 `git add` 和 `git commit`。`--git` 只影响 `daily_collector.py` 自己的提交。
 
 ---
 
@@ -181,6 +218,6 @@ cd /workspace/rank_data && python3 -m http.server 8080
 
 | 任务 | 时间 | 说明 |
 |------|------|------|
-| 每日排行榜采集 | 09:03 | 自动采集+双写+Git+可视化更新 |
+| 每日排行榜采集 | 由仓库外的调度器触发 | 调用 `python3 scripts/daily_collector.py`（按需加 `--live --git --viz`） |
 
-任务管理：`bash /root/.codebuddy/skills/automation-task-manager/scripts/scheduler-api.sh list`
+定时任务在仓库之外：在克隆后的机器上用 cron 或其他调度器调用上面的命令。采集后也可以单独运行 `bash scripts/git_after_collect.sh`（加 `--push` 则推送当前分支）。

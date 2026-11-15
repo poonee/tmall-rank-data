@@ -1,0 +1,6 @@
+# Python scripts in this directory import only the standard library:
+#   argparse, collections, csv, datetime, glob, json, os, re, shutil,
+#   subprocess, sys, typing
+#
+# No third-party packages are required.
+# Python 3.9 or newer (the scripts use list[...] / tuple[...] type hints).
